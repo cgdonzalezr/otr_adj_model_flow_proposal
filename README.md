@@ -38,4 +38,102 @@ Contributions to this project are welcome. Please follow these steps:
 
 This project is licensed under the MIT License. See the LICENSE file for details.
 
-# 11/18/2024 9:34 AM
+# 11/18/2024 11:34 AM
+
+### Data Sources
+
+The LexisNexis data used in this project comes from two main sources:
+
+1. **BCG's Original OTR Adjudication Model:** This model, found in the Dataiku project [OTR_ADJUDICATION_RISK/](https://dataiku-dss.prod-us-west-2.data.wexapps.com/projects/OTR_ADJUDICATION_RISK/), utilizes two LexisNexis files:
+    - `data_lexisnexis.csv`: Contains LN information for applications before 2022, including 53,468 rows and the following columns: `name`, `b2bcnt2y`, `model2score`, and `sbfecardcount`.
+    - `data_lexisnexis_2022.csv`: Contains LN information for applications in 2022, including 112,523 rows and the following columns: `accountnumber`, `b2bcnt2y`, `model2score`, and `sbfecardcount`.
+
+2. **New LexisNexis Files:** These files, documented in the Confluence page [LexisNexis One-time Data Directory for NAM and OTR Adjudication Models](https://wexinc.atlassian.net/wiki/spaces/RDS/pages/154849771521/LexisNexis+One-time+Data+Directory+for+NAM+and+OTR+Adjudication+Models), are provided as replacements for the BCG files:
+    - `final_wex_11529_sba21_sbfe_sbfescore_pr3.csv`: Covers the period from 01/2021 to 12/2021, joined using either `CREATED_DATE` or `DATE_DECISIONED_C`. Contains `Accountnumber` (ID) and `historydateyyyymm`.
+    - `final_wex_11795_otradjud_sba21_sbfe_sbfescore.csv`: Covers the period from 01/2022 to 05/2023, joined using either `CREATED_DATE` or `DATE_DECISIONED_C`. Contains `Accountnumber` (ID) or `NAME` and `historydateyyyymm`.
+
+### Data Validation and Reconciliation
+
+The goal of this project is to:
+
+1. **Create a Master Table:** Integrate the new LexisNexis files into the OTR master table.
+2. **Validate Application Counts:** Compare the number of applications in the new files with the corresponding periods in the BCG files to ensure consistency.
+3. **Verify Feature Values:** Compare the values of the shared feature `sbfecardcount` between the new and BCG files to ensure data integrity.
+
+This validation process will help identify any discrepancies between the new and old LexisNexis data, ensuring the accuracy and reliability of the OTR master table.
+
+## LexisNexis Data Validation: Pre-2022 Data
+
+This section details the validation process comparing the new and current LexisNexis datasets for applications before 2022.
+
+### Datasets
+
+* **New Data (2021):** `final_wex_11529_sba21_sbfe_sbfescore_pr3.csv`
+* **Current Data (2021):** `data_lexisnexis.csv` (from BCG's original OTR adjudication model)
+
+### Comparison Results
+
+The comparison focused on ensuring consistency in terms of rows, null values, data types, and shared feature values.
+
+**1. Structural Comparison:**
+
+* **Rows:** Both datasets contain 52,468 rows.
+* **Columns:** The new dataset has 21 columns, while the current dataset has 4 columns.
+* **Column Names:** The new dataset includes additional features not present in the current dataset. Both share the following columns: `name`, `b2bcnt2y`, `model2score`, and `sbfecardcount`.
+* **Data Types:** Data types for shared columns are consistent across both datasets.
+
+**2. Null Value Comparison:**
+
+* Both datasets exhibit the same number of null values for the shared columns (`b2bcnt2y` and `sbfecardcount`).
+
+**3. Value Comparison:**
+
+* A merge operation was performed to compare the values of shared columns.
+* `b2bcnt2y`: 52,455 rows have identical values, while 13 rows have differing values.
+* `model2score`: All 52,468 rows have identical values.
+* `sbfecardcount`: 52,455 rows have identical values, while 13 rows have differing values.
+
+### Conclusion
+
+The comparison reveals a high degree of concordance between the new and current LexisNexis datasets for applications before 2022. Minor discrepancies in `b2bcnt2y` and `sbfecardcount` values require further investigation to determine the source and potential impact on the master table.
+
+
+
+## LexisNexis Data Validation: 2022 Data
+
+This section details the validation process comparing the new and current LexisNexis datasets for applications in 2022.
+
+### Datasets
+
+* **New Data (2022):** `final_wex_11795_otradjud_sba21_sbfe_sbfescore.csv`
+* **Current Data (2022):** `data_lexisnexis_2022.csv` (from BCG's original OTR adjudication model)
+
+### Comparison Results
+
+The comparison focused on ensuring consistency in terms of rows, null values, data types, and shared feature values.
+
+**1. Structural Comparison:**
+
+* **Rows:** Both datasets contain 112,523 rows.
+* **Columns:** The new dataset has 20 columns, while the current dataset has 4 columns.
+* **Column Names:** The new dataset includes additional features not present in the current dataset. Both share the following columns: `accountnumber`, `b2bcnt2y`, `model2score`, and `sbfecardcount`.
+* **Data Types:** Data types for shared columns are consistent across both datasets.
+
+**2. Null Value Comparison:**
+
+* Both datasets exhibit the same number of null values for the shared columns (`b2bcnt2y` and `sbfecardcount`).
+
+**3. Value Comparison:**
+
+* A merge operation was performed to compare the values of shared columns.
+* `b2bcnt2y`: 112,493 rows have identical values, while 30 rows have differing values.
+* `model2score`: All 112,523 rows have identical values.
+* `sbfecardcount`: 112,493 rows have identical values, while 30 rows have differing values.
+
+### Conclusion
+
+The comparison reveals a high degree of concordance between the new and current LexisNexis datasets for applications in 2022. Minor discrepancies in `b2bcnt2y` and `sbfecardcount` values require further investigation. However, the overall consistency suggests that the new dataset can effectively replace the original data provided by BCG.
+
+This validation satisfies the requirements outlined in the new flow proposal ([link to Google Docs presentation](https://docs.google.com/presentation/d/1ePdwrILsn0MJBZEAdKstYTfU5C5lgHVK4PGMPy3aiPA/edit)), enabling the retraining of the OTR adjudication model with the updated LexisNexis data.
+
+The validation can be found in the notebook "1_validate_initial_files.ipynb".
