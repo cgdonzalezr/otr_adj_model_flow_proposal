@@ -198,7 +198,7 @@ COLUMNS_LOADED_LN_SINCE_DEC_2023 = [
 ```
 
 
-## 11/19/2024 8:20 PM
+## 11/19/2024 8:20 AM
 
 ### OTR Adjudication Model Retraining with New Segmentation
 
@@ -242,12 +242,77 @@ To accommodate the new data and features, several updates have been made to the 
 
 - **Python Scripts:** The `model_monitoring_preprocess_ln_since_2023` function within the `m_m_sample.py` file has been modified to incorporate the `sbfehitindex` feature into the data preprocessing pipeline.
 
-**Expected Outcomes:**
 
-By incorporating these enhancements and refining the segmentation strategy, the retrained OTR Adjudication Model is expected to:
+## 11/19/2024 3:40 PM
 
-- **Improve prediction accuracy:** The model will be better equipped to identify and assess risk, leading to more accurate predictions of fraudulent activity.
+### Data Source Considerations
 
-- **Enhance segmentation effectiveness:** The new segmentation approach will enable more granular and targeted risk assessment, allowing for more effective fraud prevention strategies.
+This section outlines considerations and potential issues related to data sources used in the project.
 
-- **Increase operational efficiency:** The improved model performance will lead to more efficient fraud detection and prevention processes, reducing manual review efforts and improving overall operational efficiency.
+#### Funding Type Source
+
+**Issue:**  We are considering moving to a new source for `funding_type` data (`PREP.SALESFORCE_OWNER.ONLINEAPPLICATION__C`). However, this table seems to have stopped pulling information in September 2024.
+
+**Analysis:**
+
+* The current `RISK_ANALYTICS.FINCRIMES.sf_online_application_c` table has data from 2011-06-08 to 2024-09-22.
+* The proposed `PREP.SALESFORCE_OWNER.ONLINEAPPLICATION__C` table has the same date range, indicating a potential issue with data freshness.
+
+**Recommendation:**
+
+* **Do not move to the new source** until the data update issue is resolved.
+* **Continue using the current query** as it still appears to be updated and correctly detects child-funded applications.
+* **Confirm with the team** before proceeding with any changes to the funding type source.
+
+**Supporting Queries:**
+
+```sql
+SELECT MIN(CREATED_DATE), MAX(CREATED_DATE)
+FROM RISK_ANALYTICS.FINCRIMES.sf_online_application_c
+LIMIT 10;
+
+SELECT MIN(CREATEDDATE), MAX(CREATEDDATE)
+FROM PREP.SALESFORCE_OWNER.ONLINEAPPLICATION__C
+LIMIT 10;
+```
+
+### `sbfehitindex_ln` Variable
+
+**Issue:** We are considering including the `sbfehitindex_ln` variable, which is already added to the data. We need to confirm if this inclusion causes any information gaps.
+
+**Analysis:**
+
+* An analysis of `SRC_RISK_FRAUD_SUB.RISK_FRAUD.OTR_ADJ_RISK_PREPROCESSED_SAMPLE_MODEL_MONITORING` shows good coverage for `sbfehitindex_ln` across different decision years.
+* There are no significant losses of information observed when including this variable.
+
+**Recommendation:**
+
+* **Proceed with including the `sbfehitindex_ln` variable** as it does not appear to introduce significant data gaps.
+
+
+```sql
+SELECT 
+    LEFT(oarpsmm."decision_date", 4) AS decision_year, 
+    COUNT(oarpsmm."application_number") AS num_applications, 
+    SUM(CASE WHEN oarpsmm."booked" = TRUE THEN 1 ELSE 0 END) AS num_booked_applications, 
+    SUM(CASE WHEN oarpsmm."booked" = TRUE AND oarpsmm."sbfecardcount_ln" IS NOT NULL THEN 1 ELSE 0 END) AS num_booked_applications_sbfecardcount_available, 
+    SUM(CASE WHEN oarpsmm."booked" = TRUE AND oarpsmm."sbfecardcount_ln" IS NOT NULL AND oarpsmm."sbfeaccountcount_ln" IS NOT NULL THEN 1 ELSE 0 END) AS num_booked_applications_sbfecardcount_available_sbfeaccountcount_available, 
+    SUM(CASE WHEN oarpsmm."booked" = TRUE AND oarpsmm."sbfecardcount_ln" IS NOT NULL AND oarpsmm."sbfeaccountcount_ln" IS NOT NULL AND oarpsmm."sbfehitindex_ln" IS NOT NULL THEN 1 ELSE 0 END) AS num_booked_applications_sbfecardcount_available_sbfeaccountcount_available_sbfehitindex_available,
+    SUM(CASE WHEN oarpsmm."booked" = FALSE THEN 1 ELSE 0 END) AS num_declined_applications, 
+    SUM(CASE WHEN oarpsmm."booked" = FALSE AND oarpsmm."sbfecardcount_ln" IS NOT NULL THEN 1 ELSE 0 END) AS num_declined_applications_sbfecardcount_available, 
+    SUM(CASE WHEN oarpsmm."booked" = FALSE AND oarpsmm."sbfecardcount_ln" IS NOT NULL AND oarpsmm."sbfeaccountcount_ln" IS NOT NULL THEN 1 ELSE 0 END) AS num_declined_applications_sbfecardcount_available_sbfeaccountcount_available, 
+    SUM(CASE WHEN oarpsmm."booked" = FALSE AND oarpsmm."sbfecardcount_ln" IS NOT NULL AND oarpsmm."sbfeaccountcount_ln" IS NOT NULL AND oarpsmm."sbfehitindex_ln" IS NOT NULL THEN 1 ELSE 0 END) AS num_declined_applications_sbfecardcount_available_sbfeaccountcount_available_sbfehitindex_available
+FROM SRC_RISK_FRAUD_SUB.RISK_FRAUD.OTR_ADJ_RISK_PREPROCESSED_SAMPLE_MODEL_MONITORING AS oarpsmm
+GROUP BY decision_year
+ORDER BY decision_year;
+```
+
+| DECISION_YEAR | NUM_APPLICATIONS | NUM_BOOKED_APPLICATIONS | NUM_BOOKED_APPLICATIONS_SBFECARDCOUNT_AVAILABLE | NUM_BOOKED_APPLICATIONS_SBFECARDCOUNT_AVAILABLE_SBFEACCOUNTCOUNT_AVAILABLE | NUM_BOOKED_APPLICATIONS_SBFECARDCOUNT_AVAILABLE_SBFEACCOUNTCOUNT_AVAILABLE_SBFEHITINDEX_AVAILABLE | NUM_DECLINED_APPLICATIONS | NUM_DECLINED_APPLICATIONS_SBFECARDCOUNT_AVAILABLE | NUM_DECLINED_APPLICATIONS_SBFECARDCOUNT_AVAILABLE_SBFEACCOUNTCOUNT_AVAILABLE | NUM_DECLINED_APPLICATIONS_SBFECARDCOUNT_AVAILABLE_SBFEACCOUNTCOUNT_AVAILABLE_SBFEHITINDEX_AVAILABLE |
+|---|---|---|---|---|---|---|---|---|---|
+| 2019 | 34856 | 19131 | 10001 | 5725 | 0 | 0 | 0 | 0 | 0 |
+| 2020 | 46245 | 26398 | 19847 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 2021 | 53416 | 33758 | 33291 | 33291 | 33291 | 19658 | 19163 | 19163 | 19163 |
+| 2022 | 83652 | 51027 | 51027 | 51027 | 51027 | 32625 | 32603 | 32603 | 32603 |
+| 2023 | 63778 | 37504 | 19591 | 15767 | 15767 | 26274 | 13885 | 12920 | 12920 |
+| 2024 | 40130 | 24819 | 15857 | 11707 | 11707 | 15311 | 9773 | 7941 | 7941 |
+
