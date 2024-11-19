@@ -196,3 +196,58 @@ COLUMNS_LOADED_LN_SINCE_DEC_2023 = [
     "SBFE_ACCOUNT_COUNT_C",  # New column added
 ]
 ```
+
+
+## 11/19/2024 8:20 PM
+
+### OTR Adjudication Model Retraining with New Segmentation
+
+This section details the ongoing efforts to retrain the OTR Adjudication Model with a new segmentation proposal. The goal of this retraining is to improve the model's performance and predictive power by incorporating new data sources and refining the segmentation strategy.
+
+**Retraining Methodology:**
+
+To ensure a smooth transition and minimize disruption to the existing workflow, the retraining process is being conducted in a dedicated Python notebook. This allows for experimentation and validation of the new approach before fully integrating it into the production environment.
+
+- **Flow Proposal Notebook:** [Link to notebook](https://dataiku-dss.prod-us-west-2.data.wexapps.com/projects/OTR_ADJUDICATION_RISK/notebooks/jupyter/Flow%20proposal/)
+
+This notebook outlines the proposed changes to the model flow, including the new segmentation logic, data preprocessing steps, and model training parameters. It serves as a working document for developing and evaluating the new model.
+
+**Flow Proposal Deck:**
+
+A comprehensive flow proposal deck has been created to document the rationale behind the new segmentation approach and the expected benefits. This deck will be continuously updated to reflect the findings and insights gained during the retraining process.
+
+- **Flow Proposal Deck:** [Link to deck](https://docs.google.com/presentation/d/1ePdwrILsn0MJBZEAdKstYTfU5C5lgHVK4PGMPy3aiPA/edit#slide=id.g2f8f80afe75_0_90)
+
+**Data Enhancements and Feature Engineering:**
+
+To further enhance the model's performance, two key data enhancements are being implemented:
+
+1. **Incorporating SBFEHITINDEX:**
+
+   - The `sbfehitindex` feature, derived from LexisNexis datasets, provides valuable information about the applicant's risk profile. This feature has been integrated into the model's input variables to improve the granularity and accuracy of the segmentation.
+
+   - To ensure consistency across different LexisNexis data versions, the corresponding column names (`sbfehitindex`, `SBFE_HIT_INDEX_C`) have been mapped and included in the relevant data loading and preprocessing steps.
+
+2. **Integrating Precise Funding Type Data:**
+
+   - Previously, the model relied on approximated funding type values derived from built query views. This limitation has been addressed by integrating precise funding type information directly from the source table (`prep.salesforece_owner.onlineapplication_c`).
+
+   - This enhancement ensures that the model has access to accurate and granular funding type data, leading to more informed and reliable predictions.
+
+**Configuration and Code Updates:**
+
+To accommodate the new data and features, several updates have been made to the model's configuration files and codebase:
+
+- **Configuration Files:** The `COLUMNS_LOADED_LN`, `COLUMNS_LOADED_LN_NEW`, and `COLUMNS_LOADED_LN_SINCE_DEC_2023` lists in the configuration files have been updated to include the `sbfehitindex` (or its equivalent) column.
+
+- **Python Scripts:** The `model_monitoring_preprocess_ln_since_2023` function within the `m_m_sample.py` file has been modified to incorporate the `sbfehitindex` feature into the data preprocessing pipeline.
+
+**Expected Outcomes:**
+
+By incorporating these enhancements and refining the segmentation strategy, the retrained OTR Adjudication Model is expected to:
+
+- **Improve prediction accuracy:** The model will be better equipped to identify and assess risk, leading to more accurate predictions of fraudulent activity.
+
+- **Enhance segmentation effectiveness:** The new segmentation approach will enable more granular and targeted risk assessment, allowing for more effective fraud prevention strategies.
+
+- **Increase operational efficiency:** The improved model performance will lead to more efficient fraud detection and prevention processes, reducing manual review efforts and improving overall operational efficiency.
