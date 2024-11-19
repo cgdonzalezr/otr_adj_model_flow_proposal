@@ -137,3 +137,62 @@ The comparison reveals a high degree of concordance between the new and current 
 This validation satisfies the requirements outlined in the new flow proposal ([link to Google Docs presentation](https://docs.google.com/presentation/d/1ePdwrILsn0MJBZEAdKstYTfU5C5lgHVK4PGMPy3aiPA/edit)), enabling the retraining of the OTR adjudication model with the updated LexisNexis data.
 
 The validation can be found in the notebook "1_validate_initial_files.ipynb".
+
+## 11/18/2024 4:30 PM
+
+### OTR Adjudication Model Update - LexisNexis Data Integration
+
+This section outlines the changes made to the OTR Adjudication Model in Dataiku 
+([flow link](https://dataiku-dss.prod-us-west-2.data.wexapps.com/projects/OTR_ADJUDICATION_RISK/flow/)) 
+following the benchmark analysis and integration of new LexisNexis base files.
+
+### Key Changes:
+
+1. **LexisNexis Data Source Update:**
+    - The existing LexisNexis base files were replaced with new versions.
+    - The processing Python recipe in the Dataiku flow was updated to accommodate the new file paths and structures.
+    - Connections to the older LexisNexis files were removed.
+
+2. **New Column Integration:**
+    - A new column, `sbfeaccountcount`, was added to the following:
+        - `mmconfig` files for each data source.
+        - `COLUMNS_LOADED_LN`, `COLUMNS_LOADED_LN_NEW`, and `COLUMNS_LOADED_LN_SINCE_DEC_2023` lists in the processing recipe.
+        - `model_monitoring_preprocess_ln_since_2023` function.
+        - `OUTPUT_COLUMNS_PREPROCESSED_SAMPLE` object in `mmconfig.py`.
+
+3. **OTR_ADJ_RISK_PREPROCESSED_SAMPLE_MODEL_MONITORING Table Update:**
+    - The `OTR_ADJ_RISK_PREPROCESSED_SAMPLE_MODEL_MONITORING` table now includes the `sbfeaccountcount` column. This enables applying segment filters based on this new attribute.
+
+### Column Definitions:
+
+Here's a breakdown of the relevant columns extracted from the LexisNexis datasets:
+
+**Original LexisNexis Dataset:**
+
+```python
+COLUMNS_LOADED_LN = [
+    "name",
+    "b2bcnt2y",
+    "model2score",
+    "sbfecardcount",
+    "sbfeaccountcount",  # New column added
+]
+
+COLUMNS_LOADED_LN_NEW = [
+    "accountnumber",
+    "b2bcnt2y",
+    "model2score",
+    "sbfecardcount",
+    "sbfeaccountcount",  # New column added
+]
+
+COLUMNS_LOADED_LN_SINCE_DEC_2023 = [
+    "ID",
+    "NAME",
+    "LEXIS_NEXIS_SBFE_MODEL_SCORE_C",
+    "MODEL_2_SCORE_C",
+    "B_2_B_CNT_2_Y_C",
+    "LEXIS_NEXIS_SBFE_TRADE_COUNT_C",
+    "SBFE_ACCOUNT_COUNT_C",  # New column added
+]
+```
