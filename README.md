@@ -316,3 +316,89 @@ ORDER BY decision_year;
 | 2023 | 63778 | 37504 | 19591 | 15767 | 15767 | 26274 | 13885 | 12920 | 12920 |
 | 2024 | 40130 | 24819 | 15857 | 11707 | 11707 | 15311 | 9773 | 7941 | 7941 |
 
+## 11/20/2024 9:40 AM
+
+## Retraining of the OTR Adjudication Model
+
+This document outlines the segmentation strategy used for retraining the OTR adjudication model.
+
+### Segmentation Logic
+
+After identifying the necessary columns, we defined the following segments for retraining the model:
+
+```python
+conditions = [
+    (lambda df: (df['pg_required_c'] == True) & (df['sbfeaccountcount_ln'] >= 1) & (df['sbfehitindex_ln'] >= 2) & (df['fico_score'].notnull())),
+    (lambda df: (df['pg_required_c'] == True) & (df['sbfeaccountcount_ln'] >= 1) & (df['sbfehitindex_ln'] >= 2) & (df['fico_score'].isnull())),
+    (lambda df: (df['pg_required_c'] == True) & (df['b2bcnt2y_ln'] >= 1) & (df['sbfehitindex_ln'] == 1) & (df['fico_score'].notnull())),
+    (lambda df: (df['pg_required_c'] == True) & (df['b2bcnt2y_ln'] >= 1) & (df['sbfehitindex_ln'] == 1) & (df['fico_score'].isnull())),
+    (lambda df: (df['pg_required_c'] == True) & (df['sbfeaccountcount_ln'] < 1) & (df['b2bcnt2y_ln'] < 1) & ((df['sbfehitindex_ln'] < 1) | (df['sbfehitindex_ln'].isnull())) & (df['fico_score'].notnull())),
+    (lambda df: (df['pg_required_c'] == True) & (df['sbfeaccountcount_ln'] < 1) & (df['b2bcnt2y_ln'] < 1) & ((df['sbfehitindex_ln'] < 1) | (df['sbfehitindex_ln'].isnull())) & (df['fico_score'].isnull())),
+    (lambda df: (df['pg_required_c'] == False) & (df['sbfeaccountcount_ln'] >= 1) & (df['sbfehitindex_ln'] >= 2)),
+    (lambda df: (df['pg_required_c'] == False) & (df['b2bcnt2y_ln'] >= 1) & (df['sbfehitindex_ln'] == 1)),
+    (lambda df: (df['pg_required_c'] == False) & (df['sbfeaccountcount_ln'] < 1) & (df['b2bcnt2y_ln'] < 1) & ((df['sbfehitindex_ln'] < 1) | (df['sbfehitindex_ln'].isnull()))) 
+]
+
+choices = [
+    'pg_1_plus_sbfe_trade_line_fico_hit',
+    'pg_1_plus_sbfe_trade_line_fico_no_hit',
+    'pg_no_sbfe_1_plus_sba_trade_line_fico_hit',
+    'pg_no_sbfe_1_plus_sba_trade_line_fico_no_hit',
+    'pg_just_fico_hit', 
+    'pg_no_sbfe_no_sba_no_fico', 
+    'no_pg_1_plus_sbfe_trade_line',
+    'no_pg_1_plus_sba_trade_line',
+    'no_pg_no_sbfe_no_sba_no_fico'
+]
+```
+
+### Validation of Segmentation
+
+To ensure the effectiveness of our segmentation strategy, we performed the following checks:
+
+* **Completeness:** We verified that all defined categories are populated and no application falls outside the defined scope.
+* **Non-Empty Categories:** We confirmed that none of the categories are empty, ensuring all segments capture a portion of the applicant pool.
+
+### Analysis of Segment Distribution
+
+We analyzed the distribution of applications across different segments in both the test and scoring datasets. The results are summarized below:
+
+**Test Data:**
+
+| risk_grade_path | count |
+|---|---|
+| no_pg_1_plus_sbfe_trade_line | 2299 |
+| pg_1_plus_sbfe_trade_line_fico_hit | 1344 |
+| pg_just_fico_hit | 751 |
+| no_pg_1_plus_sba_trade_line | 547 |
+| no_pg_no_sbfe_no_sba_no_fico | 513 |
+| pg_no_sbfe_1_plus_sba_trade_line_fico_hit | 386 |
+| pg_1_plus_sbfe_trade_line_fico_no_hit | 185 |
+| pg_no_sbfe_no_sba_no_fico | 170 |
+| pg_no_sbfe_1_plus_sba_trade_line_fico_no_hit | 106 |
+| **Total** | **6301** | 
+
+
+**Scoring Data:**
+
+| risk_grade_path | count |
+|---|---|
+| pg_1_plus_sbfe_trade_line_fico_hit | 5470 |
+| no_pg_1_plus_sbfe_trade_line | 3099 |
+| pg_just_fico_hit | 2144 |
+| pg_no_sbfe_1_plus_sba_trade_line_fico_hit | 1102 |
+| pg_1_plus_sbfe_trade_line_fico_no_hit | 1056 |
+| no_pg_no_sbfe_no_sba_no_fico | 670 |
+| no_pg_1_plus_sba_trade_line | 578 |
+| pg_no_sbfe_no_sba_no_fico | 505 |
+| pg_no_sbfe_1_plus_sba_trade_line_fico_no_hit | 315 |
+| **Total** | **14939** |
+
+### Observations:
+
+* The segment distribution varies between the training and scoring datasets. This highlights the importance of  monitoring segment representation across different datasets.
+* Notably, the proportion of "fico no hit" applications is larger in the training data compared to the scoring data.
+
+### Conclusion:
+
+The defined segments effectively capture the different applicant profiles and are well-populated across both test and scoring datasets. The observed shift in segment distribution between datasets underscores the dynamic nature of applicant characteristics and the need for continuous monitoring and model retraining. 
