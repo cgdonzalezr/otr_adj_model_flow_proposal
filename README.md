@@ -402,3 +402,74 @@ We analyzed the distribution of applications across different segments in both t
 ### Conclusion:
 
 The defined segments effectively capture the different applicant profiles and are well-populated across both test and scoring datasets. The observed shift in segment distribution between datasets underscores the dynamic nature of applicant characteristics and the need for continuous monitoring and model retraining. 
+
+## 11/20/2024 10:40 AM
+
+### Score Normalization
+
+To prevent scores from being overweighted due to variance, we normalized them before training the model. This process ensures that all scores contribute equally to the model's predictions.
+
+### Independent Logistic Regression Models
+
+We trained independent logistic regression models for each of the 9 segments. This approach allows for more accurate predictions by tailoring the model to the specific characteristics of each segment.
+
+### Normalization Scores and Estimated Parameters
+
+The following table shows the normalization scores and estimated parameters for each segment:
+
+**Normalization Scores:**
+
+```python
+{'pg_sbfe_ln_and_fico': {'ln_score': {'std': 54.73682089179337,
+   'mean': 691.5942440210782},
+  'fico_score_filled': {'std': 63.85355451455604, 'mean': 710.1576813944062}},
+ 'pg_sbfe_ln_only': {'ln_score': {'std': 66.71087090325348,
+   'mean': 683.9196787148594}},
+ 'pg_sba_ln_and_fico': {'ln_score': {'std': 45.731810666248805,
+   'mean': 685.5669515669516},
+  'fico_score_filled': {'std': 72.54145953802362, 'mean': 647.5356125356126}},
+ 'pg_sba_ln_only': {'ln_score': {'std': 49.149407601987264,
+   'mean': 674.6178861788618}},
+ 'pg_fico_only': {'fico_score': {'std': 76.99745537822918,
+   'mean': 678.4705148205928}},
+ 'pg_no_hits': {},
+ 'no_pg_sbfe_ln_only': {'ln_score': {'std': 62.03816399637875,
+   'mean': 695.6245081506464}},
+ 'no_pg_sba_ln_only': {'ln_score': {'std': 50.57822613372447,
+   'mean': 682.0095124851367}},
+ 'no_pg_no_hits': {}}
+ ```
+
+ **Estimated Parameters:**
+
+ |segment|intercept|ln_score_z|fico_score_filled_z|fico_score_z|
+|---|---|---|---|---|
+|pg_sbfe_ln_and_fico|-4.256445|-0.817988|-0.972345|NaN|
+|pg_sbfe_ln_only|-4.081015|-1.906164|NaN|NaN|
+|pg_sba_ln_and_fico|-2.292085|-0.465804|-1.041547|NaN|
+|pg_sba_ln_only|-2.584253|0.076314|NaN|NaN|
+|pg_fico_only|-3.350430|NaN|NaN|-1.749289|
+|pg_no_hits|-2.602633|NaN|NaN|NaN|
+|no_pg_sbfe_ln_only|-3.862532|-0.997345|NaN|NaN|
+|no_pg_sba_ln_only|-2.237549|-0.656777|NaN|NaN|
+|no_pg_no_hits|-2.805602|NaN|NaN|NaN|
+
+
+### Model Performance
+
+We evaluated the model's performance on scoring data from 2022 to the present. The table below shows the distribution of booked and non-booked applications, both actual and predicted, for each segment:
+
+|segment_name|total_rows|num_booked|num_non_booked|predicted_booked|predicted_declined|
+|---|---|---|---|---|---|
+|pg_sbfe_ln_and_fico|5470|3776|1694|4291|1179|
+|pg_sbfe_ln_only|1056|521|535|844|212|
+|pg_sba_ln_and_fico|1102|369|733|364|738|
+|pg_sba_ln_only|315|39|276|2|313|
+|pg_fico_only|2144|1120|1024|1344|800|
+|pg_no_hits|505|161|344|0|505|
+|no_pg_sbfe_ln_only|3099|2479|620|2635|464|
+|no_pg_sba_ln_only|578|323|255|127|451|
+|no_pg_no_hits|670|409|261|0|670|
+
+- The model shows a greater inclination towards SBFE tradelines.
+- Conversely, the model appears to be more conservative in segments with SBA tradelines or no tradelines at all.
