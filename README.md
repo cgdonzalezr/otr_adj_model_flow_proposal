@@ -442,17 +442,17 @@ The following table shows the normalization scores and estimated parameters for 
 
  **Estimated Parameters:**
 
- |segment|intercept|ln_score_z|fico_score_filled_z|fico_score_z|
-|---|---|---|---|---|
-|pg_sbfe_ln_and_fico|-4.256445|-0.817988|-0.972345|NaN|
-|pg_sbfe_ln_only|-4.081015|-1.906164|NaN|NaN|
-|pg_sba_ln_and_fico|-2.292085|-0.465804|-1.041547|NaN|
-|pg_sba_ln_only|-2.584253|0.076314|NaN|NaN|
-|pg_fico_only|-3.350430|NaN|NaN|-1.749289|
-|pg_no_hits|-2.602633|NaN|NaN|NaN|
-|no_pg_sbfe_ln_only|-3.862532|-0.997345|NaN|NaN|
-|no_pg_sba_ln_only|-2.237549|-0.656777|NaN|NaN|
-|no_pg_no_hits|-2.805602|NaN|NaN|NaN|
+|segment|intercept|ln_score_z|fico_score_z|
+|---|---|---|---|
+|pg_sbfe_ln_and_fico|-4.256445|-0.817988|-0.972345|
+|pg_sbfe_ln_only|-4.081015|-1.906164|NaN|
+|pg_sba_ln_and_fico|-2.292085|-0.465804|-1.041547|
+|pg_sba_ln_only|-2.584253|0.076314|NaN|
+|pg_fico_only|-3.350430|NaN|-1.749289|
+|pg_no_hits|-2.602633|NaN|NaN|
+|no_pg_sbfe_ln_only|-3.862532|-0.997345|NaN|
+|no_pg_sba_ln_only|-2.237549|-0.656777|NaN|
+|no_pg_no_hits|-2.805602|NaN|NaN|
 
 
 ### Model Performance
