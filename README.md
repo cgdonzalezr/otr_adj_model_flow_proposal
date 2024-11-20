@@ -38,7 +38,7 @@ Contributions to this project are welcome. Please follow these steps:
 
 This project is licensed under the MIT License. See the LICENSE file for details.
 
-# 11/18/2024 11:34 AM
+## 11/18/2024 11:34 AM
 
 ### Data Sources
 
@@ -473,3 +473,21 @@ We evaluated the model's performance on scoring data from 2022 to the present. T
 
 - The model shows a greater inclination towards SBFE tradelines.
 - Conversely, the model appears to be more conservative in segments with SBA tradelines or no tradelines at all.
+
+
+## 11/20/2024 4:50 PM
+
+## Model Retraining and Analysis
+
+This section provides an overview of the model retraining subsequent analysis performed.
+
+**Key Steps:**
+
+1. **Risk Grade Matrix Generation:**  After retraining, a risk grade matrix was generated for each segment. This matrix provides a detailed breakdown of the risk levels associated with each segment.
+
+3. **Swap Test Generation:** A swap test was conducted to evaluate the performance of the retrained model. 
+
+**Evaluation Resources:**
+
+* **Risk Grade Matrix and Swap Test Results:**  https://docs.google.com/spreadsheets/d/1c-7zgPlJoHckIRwCkgjgJDxCX1vSHVGDs3d4UPCnRRM/edit?usp=sharing
+* **Updated Presentation Deck:** https://docs.google.com/presentation/d/1ePdwrILsn0MJBZEAdKstYTfU5C5lgHVK4PGMPy3aiPA/edit?usp=sharing
