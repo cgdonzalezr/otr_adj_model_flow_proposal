@@ -332,23 +332,31 @@ conditions = [
     (lambda df: (df['pg_required_c'] == True) & (df['sbfeaccountcount_ln'] >= 1) & (df['sbfehitindex_ln'] >= 2) & (df['fico_score'].isnull())),
     (lambda df: (df['pg_required_c'] == True) & (df['b2bcnt2y_ln'] >= 1) & (df['sbfehitindex_ln'] == 1) & (df['fico_score'].notnull())),
     (lambda df: (df['pg_required_c'] == True) & (df['b2bcnt2y_ln'] >= 1) & (df['sbfehitindex_ln'] == 1) & (df['fico_score'].isnull())),
-    (lambda df: (df['pg_required_c'] == True) & (df['sbfeaccountcount_ln'] < 1) & (df['b2bcnt2y_ln'] < 1) & ((df['sbfehitindex_ln'] < 1) | (df['sbfehitindex_ln'].isnull())) & (df['fico_score'].notnull())),
-    (lambda df: (df['pg_required_c'] == True) & (df['sbfeaccountcount_ln'] < 1) & (df['b2bcnt2y_ln'] < 1) & ((df['sbfehitindex_ln'] < 1) | (df['sbfehitindex_ln'].isnull())) & (df['fico_score'].isnull())),
+    (lambda df: (df['pg_required_c'] == True) & ((df['sbfeaccountcount_ln'] < 1) | (df['sbfeaccountcount_ln'].isnull())) & ((df['b2bcnt2y_ln'] < 1) | (df['b2bcnt2y_ln'].isnull())) & ((df['sbfehitindex_ln'] <= 1) | (df['sbfehitindex_ln'].isnull())) & (df['fico_score'].notnull())),
+    (lambda df: (df['pg_required_c'] == True) & ((df['sbfeaccountcount_ln'] < 1) | (df['sbfeaccountcount_ln'].isnull())) & ((df['b2bcnt2y_ln'] < 1) | (df['b2bcnt2y_ln'].isnull())) & ((df['sbfehitindex_ln'] <= 1) | (df['sbfehitindex_ln'].isnull())) & (df['fico_score'].isnull())),
     (lambda df: (df['pg_required_c'] == False) & (df['sbfeaccountcount_ln'] >= 1) & (df['sbfehitindex_ln'] >= 2)),
     (lambda df: (df['pg_required_c'] == False) & (df['b2bcnt2y_ln'] >= 1) & (df['sbfehitindex_ln'] == 1)),
-    (lambda df: (df['pg_required_c'] == False) & (df['sbfeaccountcount_ln'] < 1) & (df['b2bcnt2y_ln'] < 1) & ((df['sbfehitindex_ln'] < 1) | (df['sbfehitindex_ln'].isnull()))) 
+    (lambda df: (df['pg_required_c'] == False) & ((df['sbfeaccountcount_ln'] < 1) | (df['sbfeaccountcount_ln'].isnull())) & ((df['b2bcnt2y_ln'] < 1) | (df['b2bcnt2y_ln'].isnull())) & ((df['sbfehitindex_ln'] < 1) | (df['sbfehitindex_ln'].isnull()))),
+#     (lambda df: (df['pg_required_c'] == True) & ((df['b2bcnt2y_ln'] < 1) | (df['b2bcnt2y_ln'].isnull())) & (df['sbfehitindex_ln'] == 1) & (df['fico_score'].notnull())), # merged with segment 5
+#     (lambda df: (df['pg_required_c'] == True) & ((df['b2bcnt2y_ln'] < 1) | (df['b2bcnt2y_ln'].isnull())) & (df['sbfehitindex_ln'] == 1) & (df['fico_score'].isnull())), # merged with segment 6, no hits
+    (lambda df: (df['pg_required_c'] == False) & ((df['b2bcnt2y_ln'] < 1) | (df['b2bcnt2y_ln'].isnull())) & (df['sbfehitindex_ln'] == 1) & (df['fico_score'].notnull())),
+    (lambda df: (df['pg_required_c'] == False) & ((df['b2bcnt2y_ln'] < 1) | (df['b2bcnt2y_ln'].isnull())) & (df['sbfehitindex_ln'] == 1) & (df['fico_score'].isnull()))
 ]
 
 choices = [
-    'pg_1_plus_sbfe_trade_line_fico_hit',
-    'pg_1_plus_sbfe_trade_line_fico_no_hit',
-    'pg_no_sbfe_1_plus_sba_trade_line_fico_hit',
-    'pg_no_sbfe_1_plus_sba_trade_line_fico_no_hit',
-    'pg_just_fico_hit', 
-    'pg_no_sbfe_no_sba_no_fico', 
-    'no_pg_1_plus_sbfe_trade_line',
-    'no_pg_1_plus_sba_trade_line',
-    'no_pg_no_sbfe_no_sba_no_fico'
+    'pg_and_1_plus_sbfe_tradeline_and_fico_hit',
+    'pg_and_1_plus_sbfe_tradeline_and_fico_no_hit',
+    'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit',
+    'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit',
+    'pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit', 
+    'pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_no_hit', 
+    'no_pg_and_1_plus_sbfe_tradeline',
+    'no_pg_and_no_1_plus_sbfe_tradeline_and_1_plus_sba_tradeline',
+    'no_pg_no_sbfe_no_sba_no_fico',
+#     'pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_hit', ## contradiction between hitindex and b2bcnt
+#     'pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_no_hit', ## contradiction between hitindex and b2bcnt
+    'no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_hit', ## contradiction between hitindex and b2bcnt, how can have fico
+    'no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_no_hit' ## contradiction between hitindex and b2bcnt
 ]
 ```
 
@@ -419,40 +427,29 @@ The following table shows the normalization scores and estimated parameters for 
 
 **Normalization Scores:**
 
-```python
-{'pg_sbfe_ln_and_fico': {'ln_score': {'std': 54.73682089179337,
-   'mean': 691.5942440210782},
-  'fico_score_filled': {'std': 63.85355451455604, 'mean': 710.1576813944062}},
- 'pg_sbfe_ln_only': {'ln_score': {'std': 66.71087090325348,
-   'mean': 683.9196787148594}},
- 'pg_sba_ln_and_fico': {'ln_score': {'std': 45.731810666248805,
-   'mean': 685.5669515669516},
-  'fico_score_filled': {'std': 72.54145953802362, 'mean': 647.5356125356126}},
- 'pg_sba_ln_only': {'ln_score': {'std': 49.149407601987264,
-   'mean': 674.6178861788618}},
- 'pg_fico_only': {'fico_score': {'std': 76.99745537822918,
-   'mean': 678.4705148205928}},
- 'pg_no_hits': {},
- 'no_pg_sbfe_ln_only': {'ln_score': {'std': 62.03816399637875,
-   'mean': 695.6245081506464}},
- 'no_pg_sba_ln_only': {'ln_score': {'std': 50.57822613372447,
-   'mean': 682.0095124851367}},
- 'no_pg_no_hits': {}}
- ```
+| Segment | Score Type | Standard Deviation | Mean |
+|---|---|---|---|
+| pg_sbfe_ln_and_fico | ln_score | 54.74 | 691.59 |
+| pg_sbfe_ln_and_fico | fico_score | 63.85 | 710.16 |
+| pg_sbfe_ln_only | ln_score | 66.71 | 683.92 |
+| pg_sba_ln_and_fico | ln_score | 45.73 | 685.57 |
+| pg_sba_ln_and_fico | fico_score | 72.54 | 647.54 |
+| pg_sba_ln_only | ln_score | 49.15 | 674.62 |
+| pg_fico_only | fico_score | 74.21 | 678.37 |
+| no_pg_sbfe_ln_only | ln_score | 62.04 | 695.62 |
+| no_pg_sba_ln_only | ln_score | 50.58 | 682.01 | 
 
  **Estimated Parameters:**
 
-|segment|intercept|ln_score_z|fico_score_z|
+| segment | intercept | ln_score_z | fico_score_z |
 |---|---|---|---|
-|pg_sbfe_ln_and_fico|-4.256445|-0.817988|-0.972345|
-|pg_sbfe_ln_only|-4.081015|-1.906164|NaN|
-|pg_sba_ln_and_fico|-2.292085|-0.465804|-1.041547|
-|pg_sba_ln_only|-2.584253|0.076314|NaN|
-|pg_fico_only|-3.350430|NaN|-1.749289|
-|pg_no_hits|-2.602633|NaN|NaN|
-|no_pg_sbfe_ln_only|-3.862532|-0.997345|NaN|
-|no_pg_sba_ln_only|-2.237549|-0.656777|NaN|
-|no_pg_no_hits|-2.805602|NaN|NaN|
+| pg_sbfe_ln_and_fico | -4.256445 | -0.817988 | -0.972345 |
+| pg_sbfe_ln_only | -4.081015 | -1.906164 | NaN |
+| pg_sba_ln_and_fico | -2.292085 | -0.465804 | -1.041547 |
+| pg_sba_ln_only | -2.584253 | 0.076314 | NaN |
+| pg_fico_only | -3.163526 | NaN | -1.245019 |
+| no_pg_sbfe_ln_only | -3.862532 | -0.997345 | NaN |
+| no_pg_sba_ln_only | -2.237549 | -0.656777 | NaN |
 
 
 ### Model Performance
