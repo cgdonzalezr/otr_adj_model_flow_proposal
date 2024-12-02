@@ -379,21 +379,38 @@ However, the column `b2bcnt2y_ln` has values 0, -99, or missing, indicating no t
 Two of these segments were added to the current segments because "false SBA" indicates that there is no information about the tradelines. For the other segments, we decided to keep them but only use them as testing data to evaluate the potential effectiveness of a "voluntarily submitted PG" strategy. These segments historically had FICO scores available, even though PGs weren't requested.
 
 
-| id | Segment | Train | Validation | Current | Train % Booked | Train Default rate in Booked applications | Train % Predicted as Booked | Train Default rate in Predicted Booked applications | Validation % Booked | Validation Default rate in Booked applications | Validation % Predicted as Booked | Validation Default rate in Predicted Booked applications | Current % Booked | Current Default rate in Booked applications | Current % Predicted as Booked | Current Default rate in Predicted Booked applications | Comments |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | pg_and_1_plus_sbfe_tradeline_and_fico_hit | 2467 | 134 | 45470 | 7.07% | 11.94% | 11.65% | 79.85% | 2.13% | 85.33% | 1.19% | 73.51% | 7.29% | 76.56% | 4.18% | 69.03% | 2.07% | 78.45% | 1.24% |  |
-| 2 | pg_and_1_plus_sbfe_tradeline_and_fico_no_hit | 249 | 185 | 10560 | 0.71% | 1.64% | 2.25% | 26.10% | 4.62% | 78.31% | 0.51% | 19.46% | 0.00% | 71.35% | 0.00% | 49.34% | 4.22% | 79.92% | 2.61% |  |
-| 3 | pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit | 702 | 386 | 11022 | 0.01% | 3.43% | 2.35% | 54.70% | 6.77% | 34.62% | 2.47% | 52.85% | 15.69% | 38.08% | 8.84% | 33.48% | 7.59% | 33.03% | 4.40% |  |
-| 4 | pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit | 123 | 106 | 3150 | 0.35% | 0.94% | 0.67% | 22.76% | 7.14% | 0.81% | 0.00% | 9.43% | 30.00% | 0.94% | 0.00% | 12.38% | 5.13% | 0.63% | 0.00% |  |
-| 5 | pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit | 3397 | 751 | 156729 | 7.74% | 6.67% | 33.39% | 62.20% | 2.60% | 66.00% | 1.52% | 58.06% | 6.19% | 66.05% | 4.64% | 54.38% | 2.90% | 65.69% | 2.10% |  |
-| 6 | pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_no_hit | 446 | 170 | 30171 | 1.28% | 1.51% | 6.43% | 16.14% | 8.33% | 0.00% | #DIV/0! | 19.41% | 9.09% | 0.00% | #DIV/0! | 22.64% | 7.91% | 0.00% | #DIV/0! |  |
-| 7 | no_pg_and_1_plus_sbfe_tradeline | 5337 | 2299 | 309915 | 3.30% | 20.42% | 6.60% | 85.35% | 3.10% | 84.90% | 1.79% | 80.03% | 9.62% | 82.51% | 6.48% | 79.99% | 7.46% | 85.03% | 5.09% |  |
-| 8 | no_pg_and_no_1_plus_sbfe_tradeline_and_1_plus_sba_tradeline | 1682 | 547 | 5784 | 0.82% | 4.86% | 1.23% | 76.40% | 10.58% | 16.88% | 2.11% | 60.51% | 23.26% | 17.00% | 8.60% | 55.88% | 21.36% | 21.97% | 8.66% |  |
-| 9 | no_pg_no_sbfe_no_sba_no_fico | 1533 | 513 | 69184 | 0.40% | 4.56% | 14.74% | 70.19% | 5.58% | 0.00% | #DIV/0! | 61.79% | 11.36% | 0.00% | #DIV/0! | 68.04% | 7.63% | 0.00% | #DIV/0! | Keep these segments, but only use them as testing data to evaluate the potential effectiveness of a "voluntarily submitted PG" strategy. These segments historically had FICO scores available, even though PGs weren't requested. |
-| 10 | pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_hit | 745 | 623 | 836727 | 21.38% | 21.17% | 14.33% | 65.64% | 3.58% | 100.00% | 2.35% | 65.80% | 10.97% | 100.00% | 7.22% | 51.93% | 3.49% | 100.00% | 1.81% | Should be pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit? |
-| 11 | pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_no_hit | 714 | 325 | 9752 | 0.05% | 2.89% | 2.08% | 17.23% | 11.38% | 0.00% | #DIV/0! | 10.46% | 11.76% | 0.00% | #DIV/0! | 10.15% | 4.04% | 0.00% | #DIV/0! | pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_no_hit |
-| 12 | no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_hit | 797 | 349 | 2382 | 0.29% | 3.10% | 0.51% | 76.04% | 2.31% | 100.00% | 1.76% | 67.91% | 8.86% | 100.00% | 6.02% | 65.55% | 3.85% | 100.00% | 2.52% | Keep these segments, but only use them as testing data to evaluate the potential effectiveness of a "voluntarily submitted PG" strategy. These segments historically had FICO scores available, even though PGs weren't requested. |
-| 13 | no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_no_hit | 996 | 918 | 98177 | 22.59% | 16.86% | 3.78% | 81.06% | 7.05% | 0.00% | #DIV/0! | 69.07% | 16.70% | 0.00% | #DIV/0! | 53.16% | 13.91% | 0.00% | #DIV/0! | Keep these segments, but only use them as testing data to evaluate the potential effectiveness of a "voluntarily submitted PG" strategy. These segments historically had FICO scores available, even though PGs weren't requested. |
+| id | Segment | Train | Validation | Current | Train % Booked | Train Default rate in Booked applications | Train % Predicted as Booked | Train Default rate in Predicted Booked applications | Comments |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | pg_and_1_plus_sbfe_tradeline_and_fico_hit | 2467 | 134 | 45470 | 7.07% | 11.94% | 11.65% | 79.85% |  |
+| 2 | pg_and_1_plus_sbfe_tradeline_and_fico_no_hit | 249 | 185 | 10560 | 0.71% | 1.64% | 2.25% | 26.10% |  |
+| 3 | pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit | 702 | 386 | 11022 | 0.01% | 3.43% | 2.35% | 54.70% |  |
+| 4 | pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit | 123 | 106 | 3150 | 0.35% | 0.94% | 0.67% | 22.76% |  |
+| 5 | pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit | 3397 | 751 | 156729 | 7.74% | 6.67% | 33.39% | 62.20% |  |
+| 6 | pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_no_hit | 446 | 170 | 30171 | 1.28% | 1.51% | 6.43% | 16.14% |  |
+| 7 | no_pg_and_1_plus_sbfe_tradeline | 5337 | 2299 | 309915 | 3.30% | 20.42% | 6.60% | 85.35% |  |
+| 8 | no_pg_and_no_1_plus_sbfe_tradeline_and_1_plus_sba_tradeline | 1682 | 547 | 5784 | 0.82% | 4.86% | 1.23% | 76.40% |  |
+| 9 | no_pg_no_sbfe_no_sba_no_fico | 1533 | 513 | 69184 | 0.40% | 4.56% | 14.74% | 70.19% | Keep these segments, but only use them as testing data to evaluate the potential effectiveness of a "voluntarily submitted PG" strategy. These segments historically had FICO scores available, even though PGs weren't requested. |
+| 10 | pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_hit | 745 | 623 | 836727 | 21.38% | 21.17% | 14.33% | 65.64% | Should be pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit? |
+| 11 | pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_no_hit | 714 | 325 | 9752 | 0.05% | 2.89% | 2.08% | 17.23% | pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_no_hit |
+| 12 | no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_hit | 797 | 349 | 2382 | 0.29% | 3.10% | 0.51% | 76.04% | Keep these segments, but only use them as testing data to evaluate the potential effectiveness of a "voluntarily submitted PG" strategy. These segments historically had FICO scores available, even though PGs weren't requested. |
+| 13 | no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_no_hit | 996 | 918 | 98177 | 22.59% | 16.86% | 3.78% | 81.06% | Keep these segments, but only use them as testing data to evaluate the potential effectiveness of a "voluntarily submitted PG" strategy. These segments historically had FICO scores available, even though PGs weren't requested. |
+
+
+| id | Validation % Booked | Validation Default rate in Booked applications | Validation % Predicted as Booked | Validation Default rate in Predicted Booked applications | Current % Booked | Current Default rate in Booked applications | Current % Predicted as Booked | Current Default rate in Predicted Booked applications |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 2.13% | 85.33% | 1.19% | 73.51% | 7.29% | 76.56% | 4.18% | 69.03% |
+| 2 | 4.62% | 78.31% | 0.51% | 19.46% | 0.00% | 71.35% | 0.00% | 49.34% |
+| 3 | 6.77% | 34.62% | 2.47% | 52.85% | 15.69% | 38.08% | 8.84% | 33.48% |
+| 4 | 7.14% | 0.81% | 0.00% | 9.43% | 30.00% | 0.94% | 0.00% | 12.38% |
+| 5 | 2.60% | 66.00% | 1.52% | 58.06% | 6.19% | 66.05% | 4.64% | 54.38% |
+| 6 | 8.33% | 0.00% | #DIV/0! | 19.41% | 9.09% | 0.00% | #DIV/0! | 22.64% |
+| 7 | 3.10% | 84.90% | 1.79% | 80.03% | 9.62% | 82.51% | 6.48% | 79.99% |
+| 8 | 10.58% | 16.88% | 2.11% | 60.51% | 23.26% | 17.00% | 8.60% | 55.88% |
+| 9 | 5.58% | 0.00% | #DIV/0! | 61.79% | 11.36% | 0.00% | #DIV/0! | 68.04% |
+| 10 | 3.58% | 100.00% | 2.35% | 65.80% | 10.97% | 100.00% | 7.22% | 51.93% |
+| 11 | 11.38% | 0.00% | #DIV/0! | 10.46% | 11.76% | 0.00% | #DIV/0! | 10.15% |
+| 12 | 2.31% | 100.00% | 1.76% | 67.91% | 8.86% | 100.00% | 6.02% | 65.55% |
+| 13 | 7.05% | 0.00% | #DIV/0! | 69.07% | 16.70% | 0.00% | #DIV/0! | 53.16% |
 
 ### Validation of Segmentation
 
