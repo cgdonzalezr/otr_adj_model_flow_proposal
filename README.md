@@ -421,6 +421,9 @@ Two of these segments were added to the current segments because "false SBA" ind
 | pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_no_hit | 1483 | 9.79% | 26.1% | 6.98% | 0% | 0% |
 | no_pg_and_1_plus_sbfe_tradeline | 377 | 2.49% | 81.17% | 0.98% | 92.57% | 0.86% |
 | no_pg_and_no_1_plus_sbfe_tradeline_and_1_plus_sba_tradeline | 27 | 0.18% | 22.22% | 0% | 33.33% | 0% |
+| no_pg_no_sbfe_no_sba_no_fico | 204 | 1.35% | 71.08% | 4.14% | 0% | 0% |
+| no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_hit | 17 | 0.11% | 41.18% | 0% | 100% | 0% |
+| no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_no_hit | 61 | 0.4% | 32.79% | 5% | 0% | 0% |
 
 ### Validation of Segmentation
 
