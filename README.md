@@ -1,6 +1,6 @@
-# otr_ln_master_table
+# otr_adj_model_flow_proposal
 
-This project aims to create a master table for OTR and LN data, including the LexisNexis Data.
+This project aims to retrain the ORT adjudication model with a new definition of segments and flow according to some insights found during the monitoring framework implementation.
 
 ## 11/18/2024 8:30 AM
 
@@ -54,9 +54,9 @@ The LexisNexis data used in this project comes from two main sources:
 
 ### Data Validation and Reconciliation
 
-The goal of this project is to:
+The goal of this section is to:
 
-1. **Create a Master Table:** Integrate the new LexisNexis files into the OTR master table.
+1. **Replace the LexisNexis plain CSV files:** Replace the LexisNexis plain CSV files used in current model training with more complete files, checking for concordance in the data.
 2. **Validate Application Counts:** Compare the number of applications in the new files with the corresponding periods in the BCG files to ensure consistency.
 3. **Verify Feature Values:** Compare the values of the shared feature `sbfecardcount` between the new and BCG files to ensure data integrity.
 
