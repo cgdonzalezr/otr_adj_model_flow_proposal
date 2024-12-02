@@ -380,54 +380,47 @@ Two of these segments were added to the current segments because "false SBA" ind
 
 #### Train: 2021
 
-| id | Segment | Train | Train % Booked | Train Default rate in Booked applications | Train % Predicted as Booked | Train Default rate in Predicted Booked applications |
-|---|---|---|---|---|---|---| 
-| 1 | pg_and_1_plus_sbfe_tradeline_and_fico_hit | 2467 | 7.07% | 11.94% | 79.85% | 2.13% |
-| 2 | pg_and_1_plus_sbfe_tradeline_and_fico_no_hit | 249 | 0.71% | 1.64% | 26.10% | 4.62% |
-| 3 | pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit | 702 | 2.01% | 3.43% | 54.70% | 6.77% |
-| 4 | pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit | 123 | 0.35% | 0.94% | 22.76% | 7.14% |
-| 5 | pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit | 10853 | 31.12% | 27.84% | 64.56% | 3.28% |
-| 6 | pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_no_hit | 1160 | 3.33% | 4.40% | 16.81% | 10.26% |
-| 7 | no_pg_and_1_plus_sbfe_tradeline | 5337 | 15.30% | 20.42% | 85.35% | 3.10% |
-| 8 | no_pg_and_no_1_plus_sbfe_tradeline_and_1_plus_sba_tradeline | 1682 | 4.82% | 4.86% | 76.40% | 10.58% |
-| 9 | no_pg_no_sbfe_no_sba_no_fico | 1533 | 4.40% | 4.56% | 70.19% | 5.58% |
-| 10 | no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_hit | 797 | 2.29% | 3.10% | 76.04% | 2.31% |
-| 11 | no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_no_hit | 9969 | 28.59% | 16.86% | 81.06% | 7.05% |
+| Segment | Applications | Segment ratio | % Booked | Default rate in Booked applications | % Predicted as Booked | Default rate in Predicted Booked applications |
+| pg_and_1_plus_sbfe_tradeline_and_fico_hit | 2467 | 7.07% | 79.85% | 2.13% | 85.33% | 1.19% |
+| pg_and_1_plus_sbfe_tradeline_and_fico_no_hit | 249 | 0.71% | 26.1% | 4.62% | 78.31% | 0.51% |
+| pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit | 702 | 2.01% | 54.7% | 6.77% | 34.62% | 2.47% |
+| pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit | 123 | 0.35% | 22.76% | 7.14% | 0.81% | 0% |
+| pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit | 10853 | 31.12% | 64.56% | 3.28% | 63.03% | 1.97% |
+| pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_no_hit | 1160 | 3.33% | 16.81% | 10.26% | 0% | 0% |
+| no_pg_and_1_plus_sbfe_tradeline | 5337 | 15.3% | 85.35% | 3.1% | 84.9% | 1.79% |
+| no_pg_and_no_1_plus_sbfe_tradeline_and_1_plus_sba_tradeline | 1682 | 4.82% | 76.4% | 10.58% | 16.88% | 2.11% |
+| no_pg_no_sbfe_no_sba_no_fico | 1533 | 4.4% | 70.19% | 5.58% | 0% | 0% |
+| no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_hit | 797 | 2.29% | 76.04% | 2.31% | 100% | 1.76% |
+| no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_no_hit | 9969 | 28.59% | 81.06% | 7.05% | 0% | 0% |
 
 
 #### Validation: Q4 2021
 
-| id | Segment | Validation | Validation % Booked | Validation Default rate in Booked applications | Validation % Predicted as Booked | Validation Default rate in Predicted Booked applications |
-|---|---|---|---|---|---|---| 
-| 1 | pg_and_1_plus_sbfe_tradeline_and_fico_hit | 1344 | 21.49% | 79.85% | 2.13% | 85.33% |
-| 2 | pg_and_1_plus_sbfe_tradeline_and_fico_no_hit | 185 | 4.59% | 26.10% | 4.62% | 78.31% |
-| 3 | pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit | 386 | 3.84% | 54.70% | 6.77% | 34.62% |
-| 4 | pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit | 106 | 1.02% | 22.76% | 7.14% | 0.81% |
-| 5 | pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit | 3134 | 54.75% | 64.56% | 3.28% | 63.03% |
-| 6 | pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_no_hit | 495 | 9.79% | 16.81% | 10.26% | 0.00% |
-| 7 | no_pg_and_1_plus_sbfe_tradeline | 2299 | 2.49% | 85.35% | 3.10% | 84.90% |
-| 8 | no_pg_and_no_1_plus_sbfe_tradeline_and_1_plus_sba_tradeline | 547 | 0.18% | 76.40% | 10.58% | 16.88% |
-| 9 | no_pg_no_sbfe_no_sba_no_fico | 513 | 1.35% | 70.19% | 5.58% | 0.00% |
-| 10 | no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_hit | 349 | 0.11% | 76.04% | 2.31% | 100.00% |
-| 11 | no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_no_hit | 1898 | 0.40% | 81.06% | 7.05% | 0.00% |
-
+| Segment | Applications | Segment ratio | % Booked | Default rate in Booked applications | % Predicted as Booked | Default rate in Predicted Booked applications |
+| pg_and_1_plus_sbfe_tradeline_and_fico_hit | 1344 | 11.94% | 73.51% | 7.29% | 76.56% | 4.18% |
+| pg_and_1_plus_sbfe_tradeline_and_fico_no_hit | 185 | 1.64% | 19.46% | 0% | 71.35% | 0% |
+| pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit | 386 | 3.43% | 52.85% | 15.69% | 38.08% | 8.84% |
+| pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit | 106 | 0.94% | 9.43% | 30% | 0.94% | 0% |
+| pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit | 3134 | 27.84% | 63.94% | 9.93% | 64.77% | 7.34% |
+| pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_no_hit | 495 | 4.4% | 13.54% | 10.45% | 0% | 0% |
+| no_pg_and_1_plus_sbfe_tradeline | 2299 | 20.42% | 80.03% | 9.62% | 82.51% | 6.48% |
+| no_pg_and_no_1_plus_sbfe_tradeline_and_1_plus_sba_tradeline | 547 | 4.86% | 60.51% | 23.26% | 17% | 8.6% |
+| no_pg_no_sbfe_no_sba_no_fico | 513 | 4.56% | 61.79% | 11.36% | 0% | 0% |
+| no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_hit | 349 | 3.1% | 67.91% | 8.86% | 100% | 6.02% |
+| no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_no_hit | 1898 | 16.86% | 69.07% | 16.7% | 0% | 0% |
 
 
 #### Current: Since 02-16-2024 (Model implemented)
 
-| id | Segment | Current | Current % Booked | Current Default rate in Booked applications | Current % Predicted as Booked | Current Default rate in Predicted Booked applications | Comments |
-|---|---|---|---|---|---|---|---|
-| 1 | pg_and_1_plus_sbfe_tradeline_and_fico_hit | 3256 | 73.51% | 7.29% | 76.56% | 4.18% |  |
-| 2 | pg_and_1_plus_sbfe_tradeline_and_fico_no_hit | 695 | 19.46% | 0.00% | 71.35% | 0.00% |  |
-| 3 | pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit | 582 | 52.85% | 15.69% | 38.08% | 8.84% |  |
-| 4 | pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit | 154 | 9.43% | 30.00% | 0.94% | 0.00% |  |
-| 5 | pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit | 8295 | 63.94% | 9.93% | 64.77% | 7.34% |  |
-| 6 | pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_no_hit | 1483 | 13.54% | 10.45% | 0.00% | 0.00% |  |
-| 7 | no_pg_and_1_plus_sbfe_tradeline | 377 | 80.03% | 9.62% | 82.51% | 6.48% |  |
-| 8 | no_pg_and_no_1_plus_sbfe_tradeline_and_1_plus_sba_tradeline | 27 | 60.51% | 23.26% | 17.00% | 8.60% |  |
-| 9 | no_pg_no_sbfe_no_sba_no_fico | 204 | 61.79% | 11.36% | 0.00% | 0.00% | Keep these segments, but only use them as testing data to evaluate the potential effectiveness of a "voluntarily submitted PG" strategy. These segments historically had FICO scores available, even though PGs weren't requested. |
-| 10 | no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_hit | 17 | 67.91% | 8.86% | 100.00% | 6.02% | Keep these segments, but only use them as testing data to evaluate the potential effectiveness of a "voluntarily submitted PG" strategy. These segments historically had FICO scores available, even though PGs weren't requested. |
-| 11 | no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_no_hit | 61 | 69.07% | 16.70% | 0.00% | 0.00% | Keep these segments, but only use them as testing data to evaluate the potential effectiveness of a "voluntarily submitted PG" strategy. These segments historically had FICO scores available, even though PGs weren't requested. |
+| Segment | Applications | Segment ratio | % Booked | Default rate in Booked applications | % Predicted as Booked | Default rate in Predicted Booked applications |
+| pg_and_1_plus_sbfe_tradeline_and_fico_hit | 3256 | 21.49% | 70.09% | 0.7% | 79.42% | 0.58% |
+| pg_and_1_plus_sbfe_tradeline_and_fico_no_hit | 695 | 4.59% | 67.48% | 3.62% | 84.75% | 2.89% |
+| pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit | 582 | 3.84% | 29.21% | 1.18% | 32.3% | 1.06% |
+| pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit | 154 | 1.02% | 20.78% | 3.13% | 0% | 0% |
+| pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit | 8295 | 54.75% | 55.35% | 1.63% | 60.89% | 1.25% |
+| pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_no_hit | 1483 | 9.79% | 26.1% | 6.98% | 0% | 0% |
+| no_pg_and_1_plus_sbfe_tradeline | 377 | 2.49% | 81.17% | 0.98% | 92.57% | 0.86% |
+| no_pg_and_no_1_plus_sbfe_tradeline_and_1_plus_sba_tradeline | 27 | 0.18% | 22.22% | 0% | 33.33% | 0% |
 
 ### Validation of Segmentation
 
