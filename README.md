@@ -378,6 +378,9 @@ However, the column `b2bcnt2y_ln` has values 0, -99, or missing, indicating no t
 
 Two of these segments were added to the current segments because "false SBA" indicates that there is no information about the tradelines. For the other segments, we decided to keep them but only use them as testing data to evaluate the potential effectiveness of a "voluntarily submitted PG" strategy. These segments historically had FICO scores available, even though PGs weren't requested.
 
+-   Train: 2021
+-   Validation: Q4 2021
+-   Current: Since 01-01-2023
 
 | id | Segment | Train | Validation | Current | Train % Booked | Train Default rate in Booked applications | Train % Predicted as Booked | Train Default rate in Predicted Booked applications | Comments |
 |---|---|---|---|---|---|---|---|---|---|
