@@ -443,32 +443,36 @@ We analyzed the distribution of applications across different segments in both t
 
 | risk_grade_path | count |
 |---|---|
-| no_pg_1_plus_sbfe_trade_line | 2299 |
-| pg_1_plus_sbfe_trade_line_fico_hit | 1344 |
-| pg_just_fico_hit | 751 |
-| no_pg_1_plus_sba_trade_line | 547 |
+| pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit | 3134 |
+| no_pg_and_1_plus_sbfe_tradeline | 2299 |
+| no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_no_hit | 1898 |
+| pg_and_1_plus_sbfe_tradeline_and_fico_hit | 1344 |
+| no_pg_and_no_1_plus_sbfe_tradeline_and_1_plus_sba_tradeline | 547 |
 | no_pg_no_sbfe_no_sba_no_fico | 513 |
-| pg_no_sbfe_1_plus_sba_trade_line_fico_hit | 386 |
-| pg_1_plus_sbfe_trade_line_fico_no_hit | 185 |
-| pg_no_sbfe_no_sba_no_fico | 170 |
-| pg_no_sbfe_1_plus_sba_trade_line_fico_no_hit | 106 |
-| **Total** | **6301** | 
+| pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_no_hit | 495 |
+| pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit | 386 |
+| no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_hit | 349 |
+| pg_and_1_plus_sbfe_tradeline_and_fico_no_hit | 185 |
+| pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit | 106 |
+| **Total** | **11256** | 
 
 
 **Scoring Data:**
 
 | risk_grade_path | count |
 |---|---|
-| pg_1_plus_sbfe_trade_line_fico_hit | 5470 |
-| no_pg_1_plus_sbfe_trade_line | 3099 |
-| pg_just_fico_hit | 2144 |
-| pg_no_sbfe_1_plus_sba_trade_line_fico_hit | 1102 |
-| pg_1_plus_sbfe_trade_line_fico_no_hit | 1056 |
-| no_pg_no_sbfe_no_sba_no_fico | 670 |
-| no_pg_1_plus_sba_trade_line | 578 |
-| pg_no_sbfe_no_sba_no_fico | 505 |
-| pg_no_sbfe_1_plus_sba_trade_line_fico_no_hit | 315 |
-| **Total** | **14939** |
+| pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit | 8295 |
+| pg_and_1_plus_sbfe_tradeline_and_fico_hit | 3256 |
+| pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_no_hit | 1483 |
+| pg_and_1_plus_sbfe_tradeline_and_fico_no_hit | 695 |
+| pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit | 582 |
+| no_pg_and_1_plus_sbfe_tradeline | 377 |
+| no_pg_no_sbfe_no_sba_no_fico | 204 |
+| pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit | 154 |
+| no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_no_hit | 61 |
+| no_pg_and_no_1_plus_sbfe_tradeline_and_1_plus_sba_tradeline | 27 |
+| no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_hit | 17 |
+| **Total** | **15151** | 
 
 ### Observations:
 
@@ -518,26 +522,6 @@ The following table shows the normalization scores and estimated parameters for 
 | pg_fico_only | -3.163526 | NaN | -1.245019 |
 | no_pg_sbfe_ln_only | -3.862532 | -0.997345 | NaN |
 | no_pg_sba_ln_only | -2.237549 | -0.656777 | NaN |
-
-
-### Model Performance
-
-We evaluated the model's performance on scoring data from 2022 to the present. The table below shows the distribution of booked and non-booked applications, both actual and predicted, for each segment:
-
-|segment_name|total_rows|num_booked|num_non_booked|predicted_booked|predicted_declined|
-|---|---|---|---|---|---|
-|pg_sbfe_ln_and_fico|5470|3776|1694|4291|1179|
-|pg_sbfe_ln_only|1056|521|535|844|212|
-|pg_sba_ln_and_fico|1102|369|733|364|738|
-|pg_sba_ln_only|315|39|276|2|313|
-|pg_fico_only|2144|1120|1024|1344|800|
-|pg_no_hits|505|161|344|0|505|
-|no_pg_sbfe_ln_only|3099|2479|620|2635|464|
-|no_pg_sba_ln_only|578|323|255|127|451|
-|no_pg_no_hits|670|409|261|0|670|
-
-- The model shows a greater inclination towards SBFE tradelines.
-- Conversely, the model appears to be more conservative in segments with SBA tradelines or no tradelines at all.
 
 
 ## 11/20/2024 4:50 PM
