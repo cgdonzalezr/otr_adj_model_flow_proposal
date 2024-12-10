@@ -456,6 +456,12 @@ def calculate_segment_statistics_with_approval(
         predicted_booked = 0
         predicted_booked_is_bad = 0
         predicted_declined = 0
+        min_number_of_trucks = data_i["number_of_trucks_c"].min()
+        max_number_of_trucks = data_i["number_of_trucks_c"].max()
+        avg_number_of_trucks = data_i["number_of_trucks_c"].mean()
+        min_years_in_business = data_i["years_in_business_c"].min()
+        max_years_in_business = data_i["years_in_business_c"].max()
+        avg_years_in_business = data_i["years_in_business_c"].mean()
 
         for risk_grade, (lower_bound, upper_bound) in risk_grade_thresholds.items():
             # Count predicted booked and declined based on risk grade and approval threshold
@@ -476,6 +482,12 @@ def calculate_segment_statistics_with_approval(
                 "predicted_booked": predicted_booked,
                 "predicted_booked_is_bad": predicted_booked_is_bad,
                 "predicted_declined": predicted_declined,
+                "min_number_of_trucks": min_number_of_trucks,
+                "max_number_of_trucks": max_number_of_trucks,
+                "avg_number_of_trucks": avg_number_of_trucks,
+                "min_years_in_business": min_years_in_business,
+                "max_years_in_business": max_years_in_business,
+                "avg_years_in_business": avg_years_in_business,
             }
         )
 
