@@ -540,3 +540,119 @@ This section provides an overview of the model retraining subsequent analysis pe
 
 * **Risk Grade Matrix and Swap Test Results:**  https://docs.google.com/spreadsheets/d/1c-7zgPlJoHckIRwCkgjgJDxCX1vSHVGDs3d4UPCnRRM/edit?usp=sharing
 * **Updated Presentation Deck:** https://docs.google.com/presentation/d/1ePdwrILsn0MJBZEAdKstYTfU5C5lgHVK4PGMPy3aiPA/edit?usp=sharing
+
+
+
+## 12/10/2024 1:30 PM
+
+### Segment Shift and Personal Guarantee Definition Update
+
+This section outlines the need for model retraining due to a significant shift observed in segment distributions and a change in the definition of the Personal Guarantee (PG) requirement. We've identified discrepancies between the existing `pg_required_c` feature and a more accurate, business-rule-based definition of PG. This discrepancy leads to inconsistencies in segment definitions across training, validation, and current datasets, impacting model performance.
+
+#### 2. Segment Shift Analysis
+
+During model retraining, we observed a shift in segment distributions between the training data (2021), validation data (4Q 2022), and current data (since 02-16-2024). 
+
+**Segment Distribution Over Time:**
+
+| ID | Segment                                               | Train (2021) | Validation (4Q 2022) | Current (since 02-16-2024) | Train (%) | Validation (%) | Current (%) |
+|----|-------------------------------------------------------|-------------|----------------------|----------------------------|-----------|----------------|-------------|
+| 1  | pg_and_1_plus_sbfe_tradeline_and_fico_hit              | 2467        | 1,344                | 3256                       | 7.07%     | 11.94%         | 21.49%      |
+| 2  | pg_and_1_plus_sbfe_tradeline_and_fico_no_hit           | 249         | 185                 | 695                        | 0.71%     | 1.64%          | 4.59%       |
+| 3  | pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit | 702         | 386                 | 582                        | 2.01%     | 3.43%          | 3.84%       |
+| 4  | pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit | 123         | 106                 | 154                        | 0.35%     | 0.94%          | 1.02%       |
+| 5  | pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit | 10853       | 3,134                | 8295                       | 31.12%    | 27.84%         | 54.75%      |
+| 6  | pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_no_hit | 1160        | 495                 | 1483                       | 3.33%     | 4.40%          | 9.79%       |
+| 7  | no_pg_and_1_plus_sbfe_tradeline                         | 5337        | 2,299                | 377                        | 15.30%    | 20.42%         | 2.49%       |
+| 8  | no_pg_and_no_1_plus_sbfe_tradeline_and_1_plus_sba_tradeline  | 1682        | 547                 | 27                         | 4.82%     | 4.86%          | 0.18%       |
+| 9  | no_pg_no_sbfe_no_sba_no_fico                           | 1533        | 513                 | 204                        | 4.40%     | 4.56%          | 1.35%       |
+| 10 | no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_hit | 797         | 349                 | 17                         | 2.29%     | 3.10%          | 0.11%       |
+| 11 | no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_no_hit | 9969        | 1,898                | 61                         | 28.59%    | 16.86%         | 0.40%       |
+
+**Key Observations:**
+
+*   Segments like `pg_and_1_plus_sbfe_tradeline_and_fico_no_hit` have increased significantly in the current data, while others like `no_pg_and_1_plus_sbfe_tradeline` have decreased considerably.
+*   This shift impacts model performance. For example, `pg_and_1_plus_sbfe_tradeline_and_fico_no_hit` shows poor performance due to limited training data in the past, while `no_pg_and_1_plus_sbfe_tradeline` performs well.
+*   The segments `pg_and_1_plus_sbfe_tradeline_and_fico_no_hit` and `no_pg_and_1_plus_sbfe_tradeline` are similar (differing primarily by PG requirement), yet exhibit different risk profiles and performance. This is counter-intuitive as they share the same SBFE score, which we expect to have consistent predictive power.
+
+#### 3. Personal Guarantee (PG) Definition Discrepancy
+
+The observed segment shift and performance discrepancies are directly linked to changes in the definition of the Personal Guarantee requirement. Since 2021, the criteria for requiring a PG have evolved, but the `pg_required_c` feature in Snowflake has not been updated accordingly.
+
+**Current PG Logic (pg_required_c feature - Snowflake):**  
+
+No description in Alation: https://alation.prod-us-west-2.data.wexapps.com/attribute/122888/
+
+*   Existing, outdated logic used to populate the `pg_required_c` feature.
+
+**New PG Logic (Business Rule Definition):**
+
+PG Required for Applicants:
+    * With less than 8 trucks OR 
+    * Less than or equal to 3 years in business.
+   
+   *   `Number_of_Trucks < 8`  OR  `Year(Submit Date) - Year(Business Established Date) <= 3`
+
+**Discrepancy Analysis:**
+
+We compared the `pg_required_c` feature against the new PG business rule definition across the three datasets. Discrepancies were calculated as follows:
+
+*   **PG Requested Discrepancy:**  `num_rows_missing_pg_rule = sum(grouped_data[(grouped_data['risk_grade_path'] == segment) & (grouped_data['number_of_trucks_segment'] == '8+') & (grouped_data['years_in_business_segment'] == '4+')]["count"])`
+*   **No PG Requested Discrepancy:** `num_rows_missing_pg_rule = sum(grouped_data[(grouped_data['risk_grade_path'] == segment) & ((grouped_data['number_of_trucks_segment'] == '0-7') | (grouped_data['years_in_business_segment'] == '0-3'))]["count"])`
+
+**Discrepancy Results:**
+
+| Segment                                               | Train (2021) | PG Requirement Discrepancy (Train) | Validation (4Q 2022) | PG Requirement Discrepancy (Validation) | Current (since 02-16-2024) | PG Requirement Discrepancy (Current) |
+|-------------------------------------------------------|-------------|------------------------------------|----------------------|----------------------------------------|----------------------------|---------------------------------------|
+| pg_and_1_plus_sbfe_tradeline_and_fico_hit              | 2467        | 6.04%                              | 1344                | 5.43%                                  | 3464                       | 0.03%                                 |
+| pg_and_1_plus_sbfe_tradeline_and_fico_no_hit           | 249         | 13.65%                             | 185                 | 4.32%                                  | 722                        | 0.00%                                 |
+| pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit | 702         | 7.55%                              | 386                 |
+| pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit | 123         | 12.20%                             | 106                 | 2.83%                                  | 159                        | 0.63%                                 |
+| pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit | 10853       | 1.98%                              | 3134                | 1.60%                                  | 9169                       | 0.60%                                 |
+| pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_no_hit | 1160        | 3.79%                              | 495                 | 4.04%                                  | 1679                       | 2.50%                                 |
+| no_pg_and_1_plus_sbfe_tradeline                         | 5337        | 94.47%                             | 2299                | 93.69%                                 | 408                        | 18.14%                                |
+| no_pg_and_no_1_plus_sbfe_tradeline_and_1_plus_sba_tradeline  | 1682        | 96.43%                             | 547                 | 95.43%                                 | 28                         | 21.43%                                |
+| no_pg_no_sbfe_no_sba_no_fico                           | 1433        | 97.59%                             | 513                 | 93.96%                                 | 234                        | 37.61%                                |
+| no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_hit | 797         | 98.75%                             | 349                 | 98.85%                                 | 24                         | 95.83%                                |
+| no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_no_hit | 9969        | 99.11%                             | 1898                | 97.52%                                 | 62                         | 17.74%                                |
+
+**Key Findings:**
+
+*   The discrepancy between the `pg_required_c` feature and the new PG business rule is significant and varies across the datasets, indicating the `pg_required_c` feature is outdated and unreliable.
+*   The discrepancy is particularly high in segments where PG is NOT requested (`no_pg` segments), suggesting that many applications that should require a PG based on the new definition are incorrectly classified.
+
+#### 4. Implications and Proposed Solution
+
+The segment shift and PG definition discrepancy have several implications:
+
+*   **Model Performance Degradation:** Using the outdated `pg_required_c` feature leads to inconsistent segment definitions and unreliable model training, resulting in poor performance, especially in segments with substantial shifts and discrepancies.
+*   **Reduced Trust in Predictions:** Inconsistent segmentation and model performance erode trust in the model's predictions, making it difficult to use them for reliable risk assessment and decision-making.
+
+**Proposed Solution:**
+
+To address these issues, we propose the following:
+
+1. **Retrain Models with Updated Segment Definitions:**
+    *   Implement the new PG business rule logic to accurately classify applications based on:
+        *   `Number_of_Trucks < 8`
+        *   `Year(Submit Date) - Year(Business Established Date) <= 3`
+        *   `N/A (Self-Disclosed by applicant)`
+    *   Replace the `pg_required_c` feature with a new feature derived from the new PG business rule logic.
+    *   Re-define the segments based on this new PG feature and other relevant features (SBFE score, SBA tradeline, FICO score).
+    *   Retrain the models using the updated segment definitions and the consistent PG feature across all datasets (train, validation, and current).
+
+2. **Monitor Segment Stability:**
+    *   Continuously monitor segment distributions after retraining to ensure stability and identify any further shifts or discrepancies.
+    *   Regularly review and update the PG business rule logic as needed to reflect any changes in business requirements or market conditions.
+
+###### 5. Expected Benefits
+
+By implementing the proposed solution, we expect the following benefits:
+
+*   **Improved Model Performance:** Consistent segment definitions and accurate PG classification will lead to more reliable model training and improved predictive performance across all segments.
+*   **Increased Trust in Predictions:** Consistent segmentation and stable model performance will increase trust in the model's predictions, enabling more informed risk assessment and decision-making.
+*   **Robustness to Future Changes:** Implementing a business-rule-based PG definition will make the models more robust to future changes in application characteristics and business requirements.
+
+
+
+
