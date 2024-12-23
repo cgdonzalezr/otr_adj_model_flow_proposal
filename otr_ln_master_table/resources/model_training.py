@@ -9,6 +9,8 @@ from statsmodels.discrete.discrete_model import Logit, BinaryResultsWrapper
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
+from reject_inference import hard_cutoff_augmentation, fuzzy_augmentation, em_algorithm
+
 import config
 
 np.random.seed(config.SEED)
@@ -222,15 +224,49 @@ def filter_df_for_condition(df: pd.DataFrame, cond_dict: Dict) -> pd.DataFrame:
 
 
 
-def generate_model_parameters_df(models_dict: Dict[str, BinaryResultsWrapper]) -> pd.DataFrame:
-    """Generate a dataframe that holds the parameters for the score blending."""
+def generate_model_parameters_df(models_dict: Dict[str, Dict]) -> pd.DataFrame:
+    """Generate a dataframe that holds the parameters for the score blending.
+
+    Parameters
+    ----------
+    models_dict : Dict[str, Dict]
+        A dictionary where keys are segment names and values are dictionaries
+        containing the model outputs from the `fit_risk_grades` function
+
+    Returns
+    -------
+    pd.DataFrame
+        A dataframe containing the model parameters.
+    """
 
     df_list = []
     # get the logistic regression parameters for all segments
-    for segment, model in models_dict.items():
-        df = model.params.to_frame().transpose()
-        df["segment"] = segment
-        df_list.append(df)
+    for segment, model_output in models_dict.items():
+        
+        # Check if it's a basic logistic regression or a reject inference method result
+        if model_output['method_name'] == 'logistic_regression':
+            model = model_output['financed_model']
+
+            #Ensure model is not None before extracting params
+            if model is not None:
+                df = model.params.to_frame().transpose()
+                df["segment"] = segment
+                df_list.append(df)
+            else:
+                print(f"Skipping segment {segment} because model is None")
+        
+        elif model_output['infered_model'] is not None:
+            model = model_output['infered_model']
+             #Ensure model is not None before extracting params
+            if model is not None:
+                df = model.params.to_frame().transpose()
+                df["segment"] = segment
+                df_list.append(df)
+            else:
+                 print(f"Skipping segment {segment} because model is None")
+        else:
+            print(f"Skipping segment {segment} because it does not have parameters to extract")
+            continue
 
     # combine results
     df_params = pd.concat(df_list, sort=False)
@@ -242,6 +278,79 @@ def generate_model_parameters_df(models_dict: Dict[str, BinaryResultsWrapper]) -
     return df_params
     
 
+# def fit_risk_grades(
+#     segment_name: str,
+#     data: pd.DataFrame,
+#     model_cols: List[str],
+#     core_model_vars: List[str],
+#     train_filter: pd.Series = None,
+#     NORMALIZE_SCORES: bool = True,
+# ) -> Tuple[pd.DataFrame, pd.DataFrame, Logit, Dict]:
+#     """Assign risk grades to slice of data by fitting logistic regression.
+
+#     Parameters
+#     ----------
+#     segment_name
+#         Name of segment
+#     data
+#         Data to fit to risk grades
+#     model_cols
+#         List of columns used as independent variables in logistic regression
+#     core_model_vars
+#         List of original (score) variables used for modelling (w/o replacement of missing values)
+#     train_filter
+#         Filter applied to isolate training data from full segment
+
+#     Returns
+#     -------
+#     data
+#         Copy of original data, with segment name, model prediction and risk grade
+#     metrics_confidence
+#         Metrics used for confidence assessment
+#     logistic_regressor
+#         Logistic regression model, fit to data
+#     variable_normalizations
+#         Normalizations applied to variables
+#     """
+
+#     # set train filter to in-sample filter if it is not provided
+#     if train_filter is None:
+#         train_filter = data["in_sample"]
+
+#     # Avoid changes outside function scope
+#     data = data.copy()
+
+#     # Normalizing independent variables via z-transform
+#     model_cols_norm = []
+#     if NORMALIZE_SCORES:
+#         variable_normalizations = {}
+#         for col in model_cols:
+#             std = data[col].std()
+#             if (std > 0) and (set(data[col].unique()) != {0, 1}):  # to skip the intercept and flags
+#                 data[col + "_z"] = (data[col] - data[col].mean()) / std
+#                 model_cols_norm.append(col + "_z")
+#                 variable_normalizations[col] = {
+#                     "std": std,
+#                     "mean": data[col].mean(),
+#                 }
+#             else:
+#                 model_cols_norm.append(col)
+#     else:
+#         model_cols_norm = model_cols
+#         variable_normalizations = None
+
+#     assert data.loc[train_filter, "booked"].all()  # Do not train on non-booked data
+
+#     # Fit logistic regression
+#     logistic_regressor = Logit(
+#         endog=data.loc[train_filter, "is_bad"].astype("bool"),
+#         exog=data.loc[train_filter, model_cols_norm],
+#     ).fit(maxiter=100, method="bfgs")
+
+
+#     return logistic_regressor, variable_normalizations
+
+
 def fit_risk_grades(
     segment_name: str,
     data: pd.DataFrame,
@@ -249,6 +358,10 @@ def fit_risk_grades(
     core_model_vars: List[str],
     train_filter: pd.Series = None,
     NORMALIZE_SCORES: bool = True,
+    reject_inference_method: Optional[str] = None,
+    n_bins_parcelling: int = 10,
+    prudence_factors_parcelling: Optional[List[int]] = None,
+
 ) -> Tuple[pd.DataFrame, pd.DataFrame, Logit, Dict]:
     """Assign risk grades to slice of data by fitting logistic regression.
 
@@ -264,7 +377,13 @@ def fit_risk_grades(
         List of original (score) variables used for modelling (w/o replacement of missing values)
     train_filter
         Filter applied to isolate training data from full segment
-
+    reject_inference_method
+        Method for reject inference: 'augmentation', 'fuzzy_augmentation', 'reclassification', 'twins', 'parcelling', 'em_algorithm', or None for basic logistic regression.
+    n_bins_parcelling
+         Number of bins for parcelling.
+    prudence_factors_parcelling
+         Prudence factors for parcelling.
+   
     Returns
     -------
     data
@@ -305,20 +424,49 @@ def fit_risk_grades(
 
     assert data.loc[train_filter, "booked"].all()  # Do not train on non-booked data
 
-    # Fit logistic regression
-    logistic_regressor = Logit(
-        endog=data.loc[train_filter, "is_bad"].astype("bool"),
-        exog=data.loc[train_filter, model_cols_norm],
-    ).fit(maxiter=100, method="bfgs")
+    # Prepare data for reject inference methods
+    xf = data.loc[train_filter, model_cols_norm].values  # Features of financed applicants
+    xf = pd.DataFrame(xf, columns=model_cols_norm)
+
+    yf = data.loc[train_filter, "is_bad"].astype(
+        "bool"
+    ).values  # Target variable (repayment status) of financed applicants
+    yf = pd.Series(yf)
+    
+    xnf = data.loc[~train_filter, model_cols_norm].values  # Features of not financed applicants
+    xnf = pd.DataFrame(xnf, columns=model_cols_norm)
+
+    # Fit logistic regression or reject inference model based on input
+    if reject_inference_method is None:
+        logistic_regressor = Logit(
+            endog=data.loc[train_filter, "is_bad"].astype("bool"),
+            exog=data.loc[train_filter, model_cols_norm],
+        ).fit(maxiter=100, method="bfgs")
+        model_output = {
+            'method_name': 'logistic_regression',
+            'financed_model': logistic_regressor,
+            'acceptance_model': None,
+            'infered_model': None
+        }
+
+    elif reject_inference_method == "hard_cutoff_augmentation":
+        model_output = hard_cutoff_augmentation(xf, xnf, yf)
+    elif reject_inference_method == "fuzzy_augmentation":
+        model_output = fuzzy_augmentation(xf, xnf, yf)
+    elif reject_inference_method == "em_algorithm":
+        model_output = em_algorithm(xf, xnf, yf)
+    else:
+        raise ValueError(
+            f"Invalid reject_inference_method: {reject_inference_method}"
+        )
+    
+    return model_output, variable_normalizations
 
 
-    return logistic_regressor, variable_normalizations
 
 
 
-
-
-def fit_models_for_segments(data: pd.DataFrame, RISK_GRADE_SEGMENTS, NORMALIZE_SCORES) -> Tuple[pd.DataFrame, pd.DataFrame, Dict, Dict]:
+def fit_models_for_segments(data: pd.DataFrame, RISK_GRADE_SEGMENTS, NORMALIZE_SCORES, reject_inference_method, n_bins_parcelling, prudence_factors_parcelling) -> Tuple[pd.DataFrame, pd.DataFrame, Dict, Dict]:
     """Fit a logit model that matches the scores for each segments to the empirical bad rate."""
 
     # initialize output objects
@@ -334,6 +482,9 @@ def fit_models_for_segments(data: pd.DataFrame, RISK_GRADE_SEGMENTS, NORMALIZE_S
             core_model_vars=params["core_model_vars"],
             train_filter=data.eval(params["train_filter"]),
             NORMALIZE_SCORES = NORMALIZE_SCORES,
+            reject_inference_method= reject_inference_method,
+            n_bins_parcelling=n_bins_parcelling,
+            prudence_factors_parcelling=prudence_factors_parcelling
         )
 
         # store results
@@ -345,25 +496,72 @@ def fit_models_for_segments(data: pd.DataFrame, RISK_GRADE_SEGMENTS, NORMALIZE_S
     return  models_dict, normalization_dict
 
 
-def generate_model_parameters_df(models_dict: Dict[str, BinaryResultsWrapper]) -> pd.DataFrame:
-    """Generate a dataframe that holds the parameters for the score blending."""
 
-    df_list = []
-    # get the logistic regression parameters for all segments
-    for segment, model in models_dict.items():
-        df = model.params.to_frame().transpose()
-        df["segment"] = segment
-        df_list.append(df)
 
-    # combine results
-    df_params = pd.concat(df_list, sort=False)
+# def apply_fitted_models_to_data(
+#     data: pd.DataFrame,
+#     models_dict: Dict,
+#     normalization_dict: Dict,
+#     RISK_GRADE_SEGMENTS: Dict,
+#     NORMALIZE_SCORES: bool = True,
+# ) -> pd.DataFrame:
+#     """Apply fitted logistic regression models to data.
 
-    # fix format
-    df_params = df_params[["segment"] + [x for x in df_params.columns if x != "segment"]]
-    df_params = df_params.reset_index(drop=True)
+#     Parameters
+#     ----------
+#     data
+#         Data to apply models to
+#     models_dict
+#         Dictionary of fitted models for each segment
+#     normalization_dict
+#         Dictionary of normalization parameters for each segment
+#     RISK_GRADE_SEGMENTS
+#         Configuration for segments
 
-    return df_params
+#     Returns
+#     -------
+#     data
+#         Copy of original data, with model predictions for each segment
+#     """
 
+#     # Avoid changes outside function scope
+#     data = data.copy()
+    
+#     # iterate over all segments
+#     for segment_name, params in RISK_GRADE_SEGMENTS.items():
+#         # filter data for segment
+#         data_i = filter_df_for_condition(df=data, cond_dict=params["condition"])
+
+#         # normalize independent variables if necessary
+#         if NORMALIZE_SCORES:
+#             model_cols_norm = []
+#             for col in params["model_cols"]:
+#                 if (
+#                     normalization_dict[segment_name] is not None
+#                     and col in normalization_dict[segment_name]
+#                 ):
+#                     data_i[col + "_z"] = (
+#                         data_i[col] - normalization_dict[segment_name][col]["mean"]
+#                     ) / normalization_dict[segment_name][col]["std"]
+#                     model_cols_norm.append(col + "_z")
+#                 else:
+#                     model_cols_norm.append(col)
+#         else:
+#             model_cols_norm = params["model_cols"]
+
+#         # apply model and store prediction
+#         if len(data_i) > 0:  # avoid error if segment is empty
+#             data_i[f"pd_{segment_name}"] = models_dict[segment_name].predict(
+#                 exog=data_i[model_cols_norm]
+#             )
+
+#         # combine results for all segments
+#         if segment_name == list(RISK_GRADE_SEGMENTS.keys())[0]:
+#             data_out = data_i
+#         else:
+#             data_out = pd.concat([data_out, data_i], axis=0)
+
+#     return data_out
 
 
 def apply_fitted_models_to_data(
@@ -399,7 +597,7 @@ def apply_fitted_models_to_data(
     for segment_name, params in RISK_GRADE_SEGMENTS.items():
         # filter data for segment
         data_i = filter_df_for_condition(df=data, cond_dict=params["condition"])
-
+        
         # normalize independent variables if necessary
         if NORMALIZE_SCORES:
             model_cols_norm = []
@@ -419,9 +617,28 @@ def apply_fitted_models_to_data(
 
         # apply model and store prediction
         if len(data_i) > 0:  # avoid error if segment is empty
-            data_i[f"pd_{segment_name}"] = models_dict[segment_name].predict(
-                exog=data_i[model_cols_norm]
-            )
+            if models_dict[segment_name]['method_name'] == 'logistic_regression':
+                model = models_dict[segment_name]['financed_model']
+                if model is not None:
+                    data_i[f"pd_{segment_name}"] = model.predict(
+                        exog=data_i[model_cols_norm]
+                     )
+                else:
+                     print(f"Skipping segment {segment_name} because model is None")
+                     continue
+
+            elif models_dict[segment_name]['infered_model'] is not None:
+                 model = models_dict[segment_name]['infered_model']
+                 if model is not None:
+                    data_i[f"pd_{segment_name}"] = model.predict(
+                            exog=data_i[model_cols_norm]
+                    )
+                 else:
+                     print(f"Skipping segment {segment_name} because model is None")
+                     continue
+            else:
+                print(f"Skipping segment {segment_name} because it does not have a model to predict with")
+                continue
 
         # combine results for all segments
         if segment_name == list(RISK_GRADE_SEGMENTS.keys())[0]:
@@ -580,7 +797,8 @@ def compute_decile_table(
     binded_df = df.copy() # Avoid high fragmentation
 
     # Filter data by segment
-    binded_df = binded_df[binded_df['risk_grade_path'] == segment]
+    if segment != None:
+        binded_df = binded_df[binded_df['risk_grade_path'] == segment]
 
     # Calculate metrics
     binded_df = binded_df.sort_values(y_pred_proba, ascending = False)
