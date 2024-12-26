@@ -654,5 +654,111 @@ By implementing the proposed solution, we expect the following benefits:
 *   **Robustness to Future Changes:** Implementing a business-rule-based PG definition will make the models more robust to future changes in application characteristics and business requirements.
 
 
+## 12/26/2024
+### Reject Inference Implementation Documentation
 
 
+This section details the implementation of several functions designed for performing reject inference in OTR adjudication. Reject inference is a technique used to incorporate information from rejected loan applications into the model development process. By making assumptions about the creditworthiness of rejected applicants, we aim to build more robust and accurate models.
+
+The functions described here were developed and tested based on various scenarios, drawing insights from the following resources:
+
+*   [Should We Reject Reject Inference? An Empirical Study](https://medium.com/@hjdlopes/should-we-reject-reject-inference-an-empirical-study-4f1e5d86bcf4)
+*   [Paper-25-Presentation.pdf](https://cer.business-school.ed.ac.uk/wp-content/uploads/sites/55/2017/03/Paper-25-Presentation.pdf)
+*   [Reject Inference for Credit Scorecards](https://www.mathworks.com/help/risk/reject-inference-for-credit-scorecards.html#RejectingInferenceMethodologyExample-6)
+*   [Reject Inference Presentation](https://docs.google.com/presentation/d/1Mtw9ATppHdINf-Vq6-rYALeofAecgLoAekxgOtl4nxc/edit#slide=id.g30a66dcb834_0_1)
+*   [Modified-logistic-regression-using-the-EM-algorithm-for-reject-inference.pdf](https://www.crc.business-school.ed.ac.uk/sites/crc/files/2023-10/Modified-logistic-regression-using-the-EM-algorithm-for-reject-inference.pdf)
+
+
+
+## Implemented Functions
+
+`hard_cutoff_augmentation`, `fuzzy_augmentation`, and `em_algorithm`.
+
+These functions are stored in the internal repository: [https://github.com/wexinc/global_decision_risk_data_science_functions/](https://github.com/wexinc/global_decision_risk_data_science_functions/)
+
+## Analysis of Results
+
+The implementation of reject inference techniques yielded varying impacts on the model's performance and parameters when compared to the baseline model trained solely on accepted applications. A detailed analysis of each method's outcome is presented below:
+
+**Original Model (Without Reject Inference):**
+
+The original model, trained without incorporating information from rejected applications, served as the benchmark for comparison. Its performance indicated a favorable balance between application approval and default risk.
+
+*   **Booking Rate:** Demonstrated a higher booking rate compared to the models incorporating reject inference on the current dataset. This suggests a broader acceptance strategy under the original model.
+*   **Default Rate:** Exhibited a lower default rate than the reject inference models on the current data. This indicates that the model effectively identified and avoided high-risk applicants within the accepted pool.
+*   **Lift Charts:** Analysis of lift charts on the test data revealed a tendency to underestimate the default rate, potentially influenced by the high default environment of 2022. However, when applied to the current data, the model generally showed an overestimation of the Probability of Default (PD) for booked applications. This suggests a potential shift in the risk profile of applicants over time.
+*   **Logistic Regression Parameters:** The coefficients of the logistic regression model provide insights into the feature importance and direction of their impact on the probability of default. For instance, negative coefficients for `ln_score_z` and `fico_score_filled_z` align with expectations, indicating that higher scores are associated with lower default risk. The intercept values vary across segments, reflecting the baseline risk for each group.
+
+| segment | intercept | ln_score_z | fico_score_filled_z | fico_score_z |
+|---|---|---|---|---|
+| pg_sbfe_ln_and_fico | -4.292345 | -0.794047 | -1.038531 | NaN |
+| pg_sbfe_ln_only | -4.081015 | -1.906164 | NaN | NaN |
+| pg_sba_ln_and_fico | -2.345075 | -0.494281 | -1.032435 | NaN |
+| pg_sba_ln_only | -2.584253 | 0.076314 | NaN | NaN |
+| pg_fico_only | -3.186551 | NaN | NaN | -1.239455 |
+| pg_no_hits | -2.226043 | NaN | NaN | NaN |
+| no_pg_sbfe_ln_only | -3.891760 | -0.985932 | NaN | NaN |
+| no_pg_sba_ln_only | -2.287240 | -0.647622 | NaN | NaN |
+| no_pg_no_hits | -2.865151 | NaN | NaN | NaN |
+| no_pg_false_sba_fico_hit | -3.744441 | NaN | NaN | NaN |
+| no_pg_false_sba_no_hits | -2.601306 | NaN | NaN | NaN |
+
+
+**Hard-Cutoff Augmentation:**
+
+Applying the Hard-Cutoff augmentation technique significantly altered the model's behavior, resulting in a more conservative lending approach.
+
+*   **Booking Rate:** The booking rate decreased substantially compared to the original model. This indicates that the model, after incorporating information from rejected applicants labeled using the hard-cutoff, became more stringent in its approval criteria.
+*   **Default Rate:**  A reduction in the default rate was observed. This is expected as the model now incorporates a segment of the previously rejected population deemed "bad," leading to a more refined identification of high-risk applicants.
+*   **Lift Charts:** The underestimation observed in the original model on the test data was mitigated to some extent. However, the application to current data resulted in a pronounced overestimation of PD. This suggests that while the technique incorporates information from rejects, the hard cutoff might lead to an overly pessimistic assessment of their risk.
+*   **Logistic Regression Parameters:** Examining the coefficients reveals notable changes. The intercepts generally decreased, suggesting a higher baseline for the probability of default. The coefficients for `fico_score_filled_z` show a substantial decrease (more negative), indicating a stronger negative impact of this feature on the probability of default after augmentation. This implies the model now places a greater emphasis on the FICO score in distinguishing between good and bad applicants, potentially influenced by the characteristics of the rejected applicants labeled as "bad."
+
+
+| segment | intercept | ln_score_z | fico_score_filled_z | fico_score_z |
+|---|---|---|---|---|
+| pg_sbfe_ln_and_fico | -3.742285 | -0.635354 | -2.748632 | NaN |
+| pg_sbfe_ln_only | -3.218438 | -4.258079 | NaN | NaN |
+| pg_sba_ln_and_fico | -0.768146 | -0.502350 | -3.918113 | NaN |
+| pg_sba_ln_only | -1.452034 | 2.470420 | NaN | NaN |
+| pg_fico_only | -1.834945 | NaN | NaN | -3.65652 |
+| pg_no_hits | -4.095221 | NaN | NaN | NaN |
+| no_pg_sbfe_ln_only | -3.118686 | -1.385371 | NaN | NaN |
+| no_pg_sba_ln_only | -1.823435 | -1.155291 | NaN | NaN |
+| no_pg_no_hits | -0.681428 | NaN | NaN | NaN |
+| no_pg_false_sba_fico_hit | -4.024075 | NaN | NaN | NaN |
+| no_pg_false_sba_no_hits | -1.123511 | NaN | NaN | NaN | 
+
+
+**EM Algorithm:**
+
+The application of the Expectation-Maximization (EM) algorithm resulted in the most drastic shift in the model's behavior, leading to an extremely conservative approach to lending.
+
+*   **Booking Rate:** The booking rate experienced a dramatic decrease, with the model declining the vast majority of applications. This indicates that the iterative process of the EM algorithm, in this instance, converged towards a model that strongly favors rejection.
+*   **Default Rate:**  The default rate approached zero. While seemingly positive, this outcome is achieved at the significant cost of severely limiting lending activity, potentially missing out on many creditworthy applicants.
+*   **Lift Charts:**  The lift charts showed an extreme overprediction of the default rate for the small number of applications that were booked. This signifies that the model is overly cautious and misclassifying a large proportion of potentially good applicants as bad.
+*   **Logistic Regression Parameters:** The coefficients underwent substantial changes. The intercept values generally increased, contrasting with the Hard-Cutoff method and indicating a much higher threshold for approval. While the coefficients for `ln_score_z` remained negative, their magnitude often decreased, suggesting a reduced influence of this feature in the final model. This potentially signifies the model is heavily relying on other factors or is simply setting a very high bar for all applicants regardless of their scores.
+
+
+
+| segment | intercept | ln_score_z | fico_score_filled_z | fico_score_z |
+|---|---|---|---|---|
+| pg_sbfe_ln_and_fico | -1.537864 | -0.069752 | -1.054724 | NaN |
+| pg_sbfe_ln_only | 1.201934 | -0.644167 | NaN | NaN |
+| pg_sba_ln_and_fico | -0.433799 | -0.225731 | -3.322600 | NaN |
+| pg_sba_ln_only | 1.342370 | -0.303383 | NaN | NaN |
+| pg_fico_only | -0.759268 | NaN | NaN | -1.798194 |
+| pg_no_hits | -4.095221 | NaN | NaN | NaN |
+| no_pg_sbfe_ln_only | -1.623933 | -0.403396 | NaN | NaN |
+| no_pg_sba_ln_only | -0.817833 | -0.466835 | NaN | NaN |
+| pg_no_hits | -0.681428 | NaN | NaN | NaN |
+| no_pg_false_sba_fico_hit | -4.024075 | NaN | NaN | NaN |
+| no_pg_false_sba_no_hits | -1.123511 | NaN | NaN | NaN |
+
+
+## Conclusion
+
+ While the goal is to improve model accuracy and robustness by leveraging information from rejected applications, the application of these techniques, particularly Hard-Cutoff Augmentation and the EM Algorithm, resulted in models that were overly conservative on the current dataset. These methods, intended to refine the identification of risk, instead led to a substantial reduction in lending activity, potentially at the expense of profitable opportunities.
+
+The original model, despite its limitations in handling rejected applications, demonstrated a more favorable balance between booking rate and default rate on the current data. This suggests that the assumptions made by the reject inference methods about the risk profile of rejected applicants might not accurately reflect the current reality of the lending environment. The EM algorithm, in particular, exhibited an extreme tendency towards risk aversion, severely limiting its practical applicability in this context.
+
+The observation of significant overestimation of PD on the current data by the reject inference models, in contrast to the underestimation on historical test data, underscores the importance of regularly evaluating and recalibrating models to account for evolving risk landscapes. It also suggests that the decision to employ reject inference should be carefully considered and justified by empirical evidence demonstrating its benefit for the specific dataset and business context. In this particular case, the evidence points towards a preference for the model trained solely on accepted applications, as it appears to provide a more accurate estimation of PD and a more balanced approach to lending decisions. Further investigation into the Fuzzy Augmentation method is warranted to assess its potential as a less aggressive alternative.
