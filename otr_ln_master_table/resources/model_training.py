@@ -656,60 +656,95 @@ def calculate_segment_statistics_with_approval(
     RISK_GRADE_SEGMENTS: Dict,
     risk_grade_thresholds: Dict[str, Tuple[float, float]],
     approval_thresholds: Dict[str, bool],
+    PG_SUBSEGMENTS: Dict = None,
 ) -> pd.DataFrame:
     """Calculate segment statistics with approval/decline decisions."""
 
     segment_stats = []
 
+    # Iterate through Risk Grade Segments
     for segment_name, params in RISK_GRADE_SEGMENTS.items():
         # filter data for segment
         data_i = filter_df_for_condition(df=data, cond_dict=params["condition"])
 
-        # Calculate segment statistics
-        total_rows = len(data_i)
-        num_booked = data_i["booked"].sum()
-        num_non_booked = total_rows - num_booked
-        booked_is_bad = data_i[data_i["booked"] == 1]["is_bad"].sum()
-        predicted_booked = 0
-        predicted_booked_is_bad = 0
-        predicted_declined = 0
-        min_number_of_trucks = data_i["number_of_trucks_c"].min()
-        max_number_of_trucks = data_i["number_of_trucks_c"].max()
-        avg_number_of_trucks = data_i["number_of_trucks_c"].mean()
-        min_years_in_business = data_i["years_in_business_num_c"].min()
-        max_years_in_business = data_i["years_in_business_num_c"].max()
-        avg_years_in_business = data_i["years_in_business_num_c"].mean()
+        # If there are no PG Subsegments, compute the stats for the Risk Grade Segment
+        if PG_SUBSEGMENTS is None:
+            segment_stats.extend(_calculate_single_segment_stats(
+                data=data_i,
+                segment_name=segment_name,
+                risk_grade_thresholds=risk_grade_thresholds,
+                approval_thresholds=approval_thresholds,
+                subsegment_name=None
+            ))
 
-        for risk_grade, (lower_bound, upper_bound) in risk_grade_thresholds.items():
-            # Count predicted booked and declined based on risk grade and approval threshold
-            mask = (data_i[f"pd_{segment_name}"] >= lower_bound) & (data_i[f"pd_{segment_name}"] < upper_bound)
-            if approval_thresholds[risk_grade]:
-                predicted_booked += mask.sum()
-                predicted_booked_is_bad += data_i[mask]["is_bad"].sum()
-            else:
-                predicted_declined += mask.sum()
-
-        segment_stats.append(
-            {
-                "segment_name": segment_name,
-                "total_rows": total_rows,
-                "num_booked": num_booked,
-                "num_non_booked": num_non_booked,
-                "booked_is_bad": booked_is_bad,
-                "predicted_booked": predicted_booked,
-                "predicted_booked_is_bad": predicted_booked_is_bad,
-                "predicted_declined": predicted_declined,
-                "min_number_of_trucks": min_number_of_trucks,
-                "max_number_of_trucks": max_number_of_trucks,
-                "avg_number_of_trucks": avg_number_of_trucks,
-                "min_years_in_business": min_years_in_business,
-                "max_years_in_business": max_years_in_business,
-                "avg_years_in_business": avg_years_in_business,
-            }
-        )
+        # If there are PG Subsegments, then we need to loop through them
+        else:
+            for subsegment_name, subsegment_params in PG_SUBSEGMENTS.items():
+                data_j = filter_df_for_condition(df=data_i, cond_dict=subsegment_params["condition"])
+                segment_stats.extend(_calculate_single_segment_stats(
+                    data=data_j,
+                    segment_name=segment_name, # keep original segment name
+                    risk_grade_thresholds=risk_grade_thresholds,
+                    approval_thresholds=approval_thresholds,
+                    subsegment_name = subsegment_name
+                ))
 
     segment_stats_df = pd.DataFrame(segment_stats)
     return segment_stats_df
+
+
+def _calculate_single_segment_stats(
+    data: pd.DataFrame,
+    segment_name: str,
+    risk_grade_thresholds: Dict[str, Tuple[float, float]],
+    approval_thresholds: Dict[str, bool],
+    subsegment_name: str = None,
+) -> List[Dict]:
+
+    total_rows = len(data)
+    num_booked = data["booked"].sum()
+    num_non_booked = total_rows - num_booked
+    booked_is_bad = data[data["booked"] == 1]["is_bad"].sum()
+    predicted_booked = 0
+    predicted_booked_is_bad = 0
+    predicted_declined = 0
+    min_number_of_trucks = data["number_of_trucks_c"].min()
+    max_number_of_trucks = data["number_of_trucks_c"].max()
+    avg_number_of_trucks = data["number_of_trucks_c"].mean()
+    min_years_in_business = data["years_in_business_num_c"].min()
+    max_years_in_business = data["years_in_business_num_c"].max()
+    avg_years_in_business = data["years_in_business_num_c"].mean()
+
+    for risk_grade, (lower_bound, upper_bound) in risk_grade_thresholds.items():
+        # Count predicted booked and declined based on risk grade and approval threshold
+        mask = (data[f"pd_{segment_name}"] >= lower_bound) & (data[f"pd_{segment_name}"] < upper_bound)
+        if approval_thresholds[risk_grade]:
+            predicted_booked += mask.sum()
+            predicted_booked_is_bad += data[mask]["is_bad"].sum()
+        else:
+            predicted_declined += mask.sum()
+
+    output = {
+            "segment_name": segment_name,
+            "total_rows": total_rows,
+            "num_booked": num_booked,
+            "num_non_booked": num_non_booked,
+            "booked_is_bad": booked_is_bad,
+            "predicted_booked": predicted_booked,
+            "predicted_booked_is_bad": predicted_booked_is_bad,
+            "predicted_declined": predicted_declined,
+            "min_number_of_trucks": min_number_of_trucks,
+            "max_number_of_trucks": max_number_of_trucks,
+            "avg_number_of_trucks": avg_number_of_trucks,
+            "min_years_in_business": min_years_in_business,
+            "max_years_in_business": max_years_in_business,
+            "avg_years_in_business": avg_years_in_business,
+        }
+
+    if subsegment_name:
+        output["subsegment_name"] = subsegment_name
+
+    return [output]
 
 
 # Create a function to apply the conditions and choices to a dataframe
