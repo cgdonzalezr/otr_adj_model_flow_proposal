@@ -915,79 +915,79 @@ This segmentation splits the data based on the number of trucks and years in bus
 The following table summarizes the model's performance across different segments and subsegments:
 
 | Dataset | Segment | Subsegment | total_rows | num_booked | num_non_booked | booked_is_bad | predicted_booked | predicted_booked_is_bad |
- | Train | pg_sbfe_ln_and_fico | pg_should_be_required | 2318 | 1858 | 460 | 34 | 1979 | 21 | 
- | Train | pg_sbfe_ln_and_fico | pg_should_not_be_required | 149 | 112 | 37 | 7 | 125 | 5 | 
- | Train | pg_sbfe_ln_only | pg_should_be_required | 215 | 55 | 160 | 3 | 172 | 1 | 
- | Train | pg_sbfe_ln_only | pg_should_not_be_required | 34 | 10 | 24 | 0 | 23 | 0 | 
- | Train | pg_sba_ln_and_fico | pg_should_be_required | 649 | 354 | 295 | 22 | 229 | 6 | 
- | Train | pg_sba_ln_and_fico | pg_should_not_be_required | 53 | 30 | 23 | 3 | 24 | 0 | 
- | Train | pg_sba_ln_only | pg_should_be_required | 108 | 23 | 85 | 2 | 0 | 0 | 
- | Train | pg_sba_ln_only | pg_should_not_be_required | 15 | 5 | 10 | 0 | 1 | 0 | 
- | Train | pg_fico_only | pg_should_be_required | 10638 | 6871 | 3767 | 219 | 6761 | 133 | 
- | Train | pg_fico_only | pg_should_not_be_required | 215 | 136 | 79 | 6 | 142 | 3 | 
- | Train | pg_no_hits | pg_should_be_required | 1116 | 183 | 933 | 18 | 0 | 0 | 
- | Train | pg_no_hits | pg_should_not_be_required | 44 | 12 | 32 | 1 | 0 | 0 | 
- | Train | no_pg_sbfe_ln_only | pg_should_be_required | 5042 | 4301 | 741 | 128 | 4315 | 75 | 
- | Train | no_pg_sbfe_ln_only | pg_should_not_be_required | 295 | 254 | 41 | 8 | 266 | 3 | 
- | Train | no_pg_sba_ln_only | pg_should_be_required | 1622 | 1241 | 381 | 125 | 301 | 6 | 
- | Train | no_pg_sba_ln_only | pg_should_not_be_required | 60 | 44 | 16 | 5 | 16 | 1 | 
- | Train | no_pg_no_hits | pg_should_be_required | 1496 | 1055 | 441 | 56 | 1496 | 56 | 
- | Train | no_pg_no_hits | pg_should_not_be_required | 37 | 21 | 16 | 2 | 37 | 2 | 
- | Train | no_pg_false_sba_fico_hit | pg_should_be_required | 787 | 598 | 189 | 14 | 787 | 14 | 
- | Train | no_pg_false_sba_fico_hit | pg_should_not_be_required | 10 | 8 | 2 | 0 | 10 | 0 | 
- | Train | no_pg_false_sba_no_hits | pg_should_be_required | 9880 | 8014 | 1866 | 551 | 0 | 0 | 
- | Train | no_pg_false_sba_no_hits | pg_should_not_be_required | 89 | 67 | 22 | 7 | 0 | 0 | 
+| Train | pg_sbfe_ln_and_fico | pg_should_be_required | 2318 | 1858 | 460 | 34 | 1979 | 21 | 
+| Train | pg_sbfe_ln_and_fico | pg_should_not_be_required | 149 | 112 | 37 | 7 | 125 | 5 | 
+|Train | pg_sbfe_ln_only | pg_should_be_required | 215 | 55 | 160 | 3 | 172 | 1 | 
+| Train | pg_sbfe_ln_only | pg_should_not_be_required | 34 | 10 | 24 | 0 | 23 | 0 | 
+| Train | pg_sba_ln_and_fico | pg_should_be_required | 649 | 354 | 295 | 22 | 229 | 6 | 
+| Train | pg_sba_ln_and_fico | pg_should_not_be_required | 53 | 30 | 23 | 3 | 24 | 0 | 
+| Train | pg_sba_ln_only | pg_should_be_required | 108 | 23 | 85 | 2 | 0 | 0 | 
+| Train | pg_sba_ln_only | pg_should_not_be_required | 15 | 5 | 10 | 0 | 1 | 0 | 
+| Train | pg_fico_only | pg_should_be_required | 10638 | 6871 | 3767 | 219 | 6761 | 133 | 
+| Train | pg_fico_only | pg_should_not_be_required | 215 | 136 | 79 | 6 | 142 | 3 | 
+| Train | pg_no_hits | pg_should_be_required | 1116 | 183 | 933 | 18 | 0 | 0 | 
+| Train | pg_no_hits | pg_should_not_be_required | 44 | 12 | 32 | 1 | 0 | 0 | 
+| Train | no_pg_sbfe_ln_only | pg_should_be_required | 5042 | 4301 | 741 | 128 | 4315 | 75 | 
+| Train | no_pg_sbfe_ln_only | pg_should_not_be_required | 295 | 254 | 41 | 8 | 266 | 3 | 
+| Train | no_pg_sba_ln_only | pg_should_be_required | 1622 | 1241 | 381 | 125 | 301 | 6 | 
+| Train | no_pg_sba_ln_only | pg_should_not_be_required | 60 | 44 | 16 | 5 | 16 | 1 | 
+| Train | no_pg_no_hits | pg_should_be_required | 1496 | 1055 | 441 | 56 | 1496 | 56 | 
+| Train | no_pg_no_hits | pg_should_not_be_required | 37 | 21 | 16 | 2 | 37 | 2 | 
+| Train | no_pg_false_sba_fico_hit | pg_should_be_required | 787 | 598 | 189 | 14 | 787 | 14 | 
+| Train | no_pg_false_sba_fico_hit | pg_should_not_be_required | 10 | 8 | 2 | 0 | 10 | 0 | 
+| Train | no_pg_false_sba_no_hits | pg_should_be_required | 9880 | 8014 | 1866 | 551 | 0 | 0 | 
+| Train | no_pg_false_sba_no_hits | pg_should_not_be_required | 89 | 67 | 22 | 7 | 0 | 0 | 
 
 
- | Dataset | Segment | Subsegment | total_rows | num_booked | num_non_booked | booked_is_bad | predicted_booked | predicted_booked_is_bad |
- | Test | pg_sbfe_ln_and_fico | pg_should_be_required | 1271 | 938 | 333 | 66 | 971 | 40 | 
- | Test | pg_sbfe_ln_and_fico | pg_should_not_be_required | 73 | 50 | 23 | 3 | 59 | 3 | 
- | Test | pg_sbfe_ln_only | pg_should_be_required | 177 | 31 | 146 | 0 | 125 | 0 | 
- | Test | pg_sbfe_ln_only | pg_should_not_be_required | 8 | 5 | 3 | 0 | 7 | 0 | 
- | Test | pg_sba_ln_and_fico | pg_should_be_required | 378 | 200 | 178 | 29 | 150 | 11 | 
- | Test | pg_sba_ln_and_fico | pg_should_not_be_required | 8 | 4 | 4 | 1 | 5 | 1 | 
- | Test | pg_sba_ln_only | pg_should_be_required | 103 | 10 | 93 | 1 | 1 | 0 | 
- | Test | pg_sba_ln_only | pg_should_not_be_required | 3 | 0 | 3 | 0 | 0 | 0 | 
- | Test | pg_fico_only | pg_should_be_required | 3084 | 1972 | 1112 | 182 | 2002 | 138 | 
- | Test | pg_fico_only | pg_should_not_be_required | 50 | 32 | 18 | 2 | 41 | 2 | 
- | Test | pg_no_hits | pg_should_be_required | 475 | 63 | 412 | 6 | 0 | 0 | 
- | Test | pg_no_hits | pg_should_not_be_required | 20 | 4 | 16 | 0 | 0 | 0 | 
- | Test | no_pg_sbfe_ln_only | pg_should_be_required | 2154 | 1713 | 441 | 154 | 1786 | 110 | 
- | Test | no_pg_sbfe_ln_only | pg_should_not_be_required | 145 | 127 | 18 | 12 | 131 | 8 | 
- | Test | no_pg_sba_ln_only | pg_should_be_required | 522 | 318 | 204 | 68 | 93 | 8 | 
- | Test | no_pg_sba_ln_only | pg_should_not_be_required | 25 | 13 | 12 | 3 | 5 | 1 | 
- | Test | no_pg_no_hits | pg_should_be_required | 482 | 292 | 190 | 32 | 482 | 32 | 
- | Test | no_pg_no_hits | pg_should_not_be_required | 31 | 25 | 6 | 2 | 31 | 2 | 
- | Test | no_pg_false_sba_fico_hit | pg_should_be_required | 345 | 235 | 110 | 21 | 345 | 21 | 
- | Test | no_pg_false_sba_fico_hit | pg_should_not_be_required | 4 | 2 | 2 | 0 | 4 | 0 | 
- | Test | no_pg_false_sba_no_hits | pg_should_be_required | 1851 | 1280 | 571 | 201 | 0 | 0 | 
- | Test | no_pg_false_sba_no_hits | pg_should_not_be_required | 47 | 31 | 16 | 5 | 0 | 0 | 
+| Dataset | Segment | Subsegment | total_rows | num_booked | num_non_booked | booked_is_bad | predicted_booked | predicted_booked_is_bad |
+| Test | pg_sbfe_ln_and_fico | pg_should_be_required | 1271 | 938 | 333 | 66 | 971 | 40 | 
+| Test | pg_sbfe_ln_and_fico | pg_should_not_be_required | 73 | 50 | 23 | 3 | 59 | 3 | 
+| Test | pg_sbfe_ln_only | pg_should_be_required | 177 | 31 | 146 | 0 | 125 | 0 | 
+| Test | pg_sbfe_ln_only | pg_should_not_be_required | 8 | 5 | 3 | 0 | 7 | 0 | 
+| Test | pg_sba_ln_and_fico | pg_should_be_required | 378 | 200 | 178 | 29 | 150 | 11 | 
+| Test | pg_sba_ln_and_fico | pg_should_not_be_required | 8 | 4 | 4 | 1 | 5 | 1 | 
+| Test | pg_sba_ln_only | pg_should_be_required | 103 | 10 | 93 | 1 | 1 | 0 | 
+| Test | pg_sba_ln_only | pg_should_not_be_required | 3 | 0 | 3 | 0 | 0 | 0 | 
+| Test | pg_fico_only | pg_should_be_required | 3084 | 1972 | 1112 | 182 | 2002 | 138 | 
+| Test | pg_fico_only | pg_should_not_be_required | 50 | 32 | 18 | 2 | 41 | 2 | 
+| Test | pg_no_hits | pg_should_be_required | 475 | 63 | 412 | 6 | 0 | 0 | 
+| Test | pg_no_hits | pg_should_not_be_required | 20 | 4 | 16 | 0 | 0 | 0 | 
+| Test | no_pg_sbfe_ln_only | pg_should_be_required | 2154 | 1713 | 441 | 154 | 1786 | 110 | 
+| Test | no_pg_sbfe_ln_only | pg_should_not_be_required | 145 | 127 | 18 | 12 | 131 | 8 | 
+| Test | no_pg_sba_ln_only | pg_should_be_required | 522 | 318 | 204 | 68 | 93 | 8 | 
+| Test | no_pg_sba_ln_only | pg_should_not_be_required | 25 | 13 | 12 | 3 | 5 | 1 | 
+| Test | no_pg_no_hits | pg_should_be_required | 482 | 292 | 190 | 32 | 482 | 32 | 
+| Test | no_pg_no_hits | pg_should_not_be_required | 31 | 25 | 6 | 2 | 31 | 2 | 
+| Test | no_pg_false_sba_fico_hit | pg_should_be_required | 345 | 235 | 110 | 21 | 345 | 21 | 
+| Test | no_pg_false_sba_fico_hit | pg_should_not_be_required | 4 | 2 | 2 | 0 | 4 | 0 | 
+| Test | no_pg_false_sba_no_hits | pg_should_be_required | 1851 | 1280 | 571 | 201 | 0 | 0 | 
+| Test | no_pg_false_sba_no_hits | pg_should_not_be_required | 47 | 31 | 16 | 5 | 0 | 0 | 
 
 
 
- | Dataset | Segment | Subsegment | total_rows | num_booked | num_non_booked | booked_is_bad | predicted_booked | predicted_booked_is_bad |
-  | Current | pg_sbfe_ln_and_fico | pg_should_be_required | 3463 | 2445 | 1018 | 17 | 2736 | 17 | 
- | Current | pg_sbfe_ln_and_fico | pg_should_not_be_required | 1 | 1 | 0 | 0 | 1 | 0 | 
- | Current | pg_sbfe_ln_only | pg_should_be_required | 722 | 491 | 231 | 16 | 611 | 16 | 
- | Current | pg_sbfe_ln_only | pg_should_not_be_required | 0 | 0 | 0 | 0 | 0 | 0 | 
- | Current | pg_sba_ln_and_fico | pg_should_be_required | 626 | 192 | 434 | 2 | 203 | 2 | 
- | Current | pg_sba_ln_and_fico | pg_should_not_be_required | 1 | 1 | 0 | 0 | 1 | 0 | 
- | Current | pg_sba_ln_only | pg_should_be_required | 158 | 33 | 125 | 1 | 0 | 0 | 
- | Current | pg_sba_ln_only | pg_should_not_be_required | 1 | 1 | 0 | 0 | 0 | 0 | 
- | Current | pg_fico_only | pg_should_be_required | 9114 | 5045 | 4069 | 53 | 5548 | 45 | 
- | Current | pg_fico_only | pg_should_not_be_required | 55 | 33 | 22 | 1 | 40 | 1 | 
- | Current | pg_no_hits | pg_should_be_required | 1637 | 423 | 1214 | 22 | 0 | 0 | 
- | Current | pg_no_hits | pg_should_not_be_required | 42 | 15 | 27 | 0 | 0 | 0 | 
- | Current | no_pg_sbfe_ln_only | pg_should_be_required | 74 | 60 | 14 | 0 | 66 | 0 | 
- | Current | no_pg_sbfe_ln_only | pg_should_not_be_required | 334 | 275 | 59 | 3 | 314 | 3 | 
- | Current | no_pg_sba_ln_only | pg_should_be_required | 6 | 3 | 3 | 0 | 1 | 0 | 
- | Current | no_pg_sba_ln_only | pg_should_not_be_required | 22 | 4 | 18 | 0 | 8 | 0 | 
- | Current | no_pg_no_hits | pg_should_be_required | 88 | 60 | 28 | 6 | 88 | 6 | 
- | Current | no_pg_no_hits | pg_should_not_be_required | 146 | 97 | 49 | 4 | 146 | 4 | 
- | Current | no_pg_false_sba_fico_hit | pg_should_be_required | 23 | 10 | 13 | 0 | 23 | 0 | 
- | Current | no_pg_false_sba_fico_hit | pg_should_not_be_required | 1 | 1 | 0 | 0 | 1 | 0 | 
- | Current | no_pg_false_sba_no_hits | pg_should_be_required | 11 | 4 | 7 | 0 | 0 | 0 | 
- | Current | no_pg_false_sba_no_hits | pg_should_not_be_required | 51 | 18 | 33 | 1 | 0 | 0 | 
+| Dataset | Segment | Subsegment | total_rows | num_booked | num_non_booked | booked_is_bad | predicted_booked | predicted_booked_is_bad |
+| Current | pg_sbfe_ln_and_fico | pg_should_be_required | 3463 | 2445 | 1018 | 17 | 2736 | 17 | 
+| Current | pg_sbfe_ln_and_fico | pg_should_not_be_required | 1 | 1 | 0 | 0 | 1 | 0 | 
+| Current | pg_sbfe_ln_only | pg_should_be_required | 722 | 491 | 231 | 16 | 611 | 16 | 
+| Current | pg_sbfe_ln_only | pg_should_not_be_required | 0 | 0 | 0 | 0 | 0 | 0 | 
+| Current | pg_sba_ln_and_fico | pg_should_be_required | 626 | 192 | 434 | 2 | 203 | 2 | 
+| Current | pg_sba_ln_and_fico | pg_should_not_be_required | 1 | 1 | 0 | 0 | 1 | 0 | 
+| Current | pg_sba_ln_only | pg_should_be_required | 158 | 33 | 125 | 1 | 0 | 0 | 
+| Current | pg_sba_ln_only | pg_should_not_be_required | 1 | 1 | 0 | 0 | 0 | 0 | 
+| Current | pg_fico_only | pg_should_be_required | 9114 | 5045 | 4069 | 53 | 5548 | 45 | 
+| Current | pg_fico_only | pg_should_not_be_required | 55 | 33 | 22 | 1 | 40 | 1 | 
+| Current | pg_no_hits | pg_should_be_required | 1637 | 423 | 1214 | 22 | 0 | 0 | 
+| Current | pg_no_hits | pg_should_not_be_required | 42 | 15 | 27 | 0 | 0 | 0 | 
+| Current | no_pg_sbfe_ln_only | pg_should_be_required | 74 | 60 | 14 | 0 | 66 | 0 | 
+| Current | no_pg_sbfe_ln_only | pg_should_not_be_required | 334 | 275 | 59 | 3 | 314 | 3 | 
+| Current | no_pg_sba_ln_only | pg_should_be_required | 6 | 3 | 3 | 0 | 1 | 0 | 
+| Current | no_pg_sba_ln_only | pg_should_not_be_required | 22 | 4 | 18 | 0 | 8 | 0 | 
+| Current | no_pg_no_hits | pg_should_be_required | 88 | 60 | 28 | 6 | 88 | 6 | 
+| Current | no_pg_no_hits | pg_should_not_be_required | 146 | 97 | 49 | 4 | 146 | 4 | 
+| Current | no_pg_false_sba_fico_hit | pg_should_be_required | 23 | 10 | 13 | 0 | 23 | 0 | 
+| Current | no_pg_false_sba_fico_hit | pg_should_not_be_required | 1 | 1 | 0 | 0 | 1 | 0 | 
+| Current | no_pg_false_sba_no_hits | pg_should_be_required | 11 | 4 | 7 | 0 | 0 | 0 | 
+| Current | no_pg_false_sba_no_hits | pg_should_not_be_required | 51 | 18 | 33 | 1 | 0 | 0 | 
 
 
 #### Consistent and Improved Performance in Key Segments:
