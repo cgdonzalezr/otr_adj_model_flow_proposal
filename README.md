@@ -892,3 +892,139 @@ The impact on risk grades is equally significant. The following tables show the 
 #### Impact on Booking Rate
 
 The increased PD and the shift towards higher risk grades have resulted in a dramatic decrease in the booking rate. The model, trained with the EM algorithm for reject inference, now declines the vast majority of applications. This indicates that the iterative process of the EM algorithm, in this instance, converged towards a model that strongly favors rejection. The model has learned to identify characteristics within the rejected applications that are indicative of higher default risk, leading to a more conservative approach to approving new applications.
+
+
+## 01/02/2025 2:23 pm
+
+### Model Performance Validation with Segmentation for PG_REQUIRED_C Inconsistencies
+
+This section details the performance validation of a logistic regression model (without reject inference) addressing inconsistencies in the `pg_required_c` variable.  The current data is biased due to recent applications requiring 12 months of observation to fully assess behavior. This will be addressed in the next iteration.
+
+#### Segmentation Strategy
+
+To handle inconsistencies highlighted in [the README](https://github.com/cgdonzalezr/otr_adj_model_flow_proposal?tab=readme-ov-file#segment-shift-and-personal-guarantee-definition-update), a subsegment variable `pg_subsegment` was created:
+
+```python
+data_dev_scored['pg_subsegment'] = np.where((data_dev_scored['number_of_trucks_c'] <= 7) | (data_dev_scored['years_in_business_num_c'] <= 3), 'pg_should_be_required', 'pg_should_not_be_required')
+```
+
+This segmentation splits the data based on the number of trucks and years in business, aiming to identify cases where a personal guarantee should have been required
+
+#### Results
+
+The following table summarizes the model's performance across different segments and subsegments:
+
+| Dataset | Segment | Subsegment | total_rows | num_booked | num_non_booked | booked_is_bad | predicted_booked | predicted_booked_is_bad |
+ | Train| pg_sbfe_ln_and_fico | pg_should_be_required | 2318 | 1858 | 460 | 34 | 1979 | 21 | 
+ | Train| pg_sbfe_ln_and_fico | pg_should_not_be_required | 149 | 112 | 37 | 7 | 125 | 5 | 
+ | Train| pg_sbfe_ln_only | pg_should_be_required | 215 | 55 | 160 | 3 | 172 | 1 | 
+ | Train| pg_sbfe_ln_only | pg_should_not_be_required | 34 | 10 | 24 | 0 | 23 | 0 | 
+ | Train| pg_sba_ln_and_fico | pg_should_be_required | 649 | 354 | 295 | 22 | 229 | 6 | 
+ | Train| pg_sba_ln_and_fico | pg_should_not_be_required | 53 | 30 | 23 | 3 | 24 | 0 | 
+ | Train| pg_sba_ln_only | pg_should_be_required | 108 | 23 | 85 | 2 | 0 | 0 | 
+ | Train| pg_sba_ln_only | pg_should_not_be_required | 15 | 5 | 10 | 0 | 1 | 0 | 
+ | Train| pg_fico_only | pg_should_be_required | 10638 | 6871 | 3767 | 219 | 6761 | 133 | 
+ | Train| pg_fico_only | pg_should_not_be_required | 215 | 136 | 79 | 6 | 142 | 3 | 
+ | Train| pg_no_hits | pg_should_be_required | 1116 | 183 | 933 | 18 | 0 | 0 | 
+ | Train| pg_no_hits | pg_should_not_be_required | 44 | 12 | 32 | 1 | 0 | 0 | 
+ | Train| no_pg_sbfe_ln_only | pg_should_be_required | 5042 | 4301 | 741 | 128 | 4315 | 75 | 
+ | Train| no_pg_sbfe_ln_only | pg_should_not_be_required | 295 | 254 | 41 | 8 | 266 | 3 | 
+ | Train| no_pg_sba_ln_only | pg_should_be_required | 1622 | 1241 | 381 | 125 | 301 | 6 | 
+ | Train| no_pg_sba_ln_only | pg_should_not_be_required | 60 | 44 | 16 | 5 | 16 | 1 | 
+ | Train| no_pg_no_hits | pg_should_be_required | 1496 | 1055 | 441 | 56 | 1496 | 56 | 
+ | Train| no_pg_no_hits | pg_should_not_be_required | 37 | 21 | 16 | 2 | 37 | 2 | 
+ | Train| no_pg_false_sba_fico_hit | pg_should_be_required | 787 | 598 | 189 | 14 | 787 | 14 | 
+ | Train| no_pg_false_sba_fico_hit | pg_should_not_be_required | 10 | 8 | 2 | 0 | 10 | 0 | 
+ | Train| no_pg_false_sba_no_hits | pg_should_be_required | 9880 | 8014 | 1866 | 551 | 0 | 0 | 
+ | Train| no_pg_false_sba_no_hits | pg_should_not_be_required | 89 | 67 | 22 | 7 | 0 | 0 | 
+
+
+ | Dataset | Segment | Subsegment | total_rows | num_booked | num_non_booked | booked_is_bad | predicted_booked | predicted_booked_is_bad |
+ | Test| pg_sbfe_ln_and_fico | pg_should_be_required | 1271 | 938 | 333 | 66 | 971 | 40 | 
+ | Test| pg_sbfe_ln_and_fico | pg_should_not_be_required | 73 | 50 | 23 | 3 | 59 | 3 | 
+ | Test| pg_sbfe_ln_only | pg_should_be_required | 177 | 31 | 146 | 0 | 125 | 0 | 
+ | Test| pg_sbfe_ln_only | pg_should_not_be_required | 8 | 5 | 3 | 0 | 7 | 0 | 
+ | Test| pg_sba_ln_and_fico | pg_should_be_required | 378 | 200 | 178 | 29 | 150 | 11 | 
+ | Test| pg_sba_ln_and_fico | pg_should_not_be_required | 8 | 4 | 4 | 1 | 5 | 1 | 
+ | Test| pg_sba_ln_only | pg_should_be_required | 103 | 10 | 93 | 1 | 1 | 0 | 
+ | Test| pg_sba_ln_only | pg_should_not_be_required | 3 | 0 | 3 | 0 | 0 | 0 | 
+ | Test| pg_fico_only | pg_should_be_required | 3084 | 1972 | 1112 | 182 | 2002 | 138 | 
+ | Test| pg_fico_only | pg_should_not_be_required | 50 | 32 | 18 | 2 | 41 | 2 | 
+ | Test| pg_no_hits | pg_should_be_required | 475 | 63 | 412 | 6 | 0 | 0 | 
+ | Test| pg_no_hits | pg_should_not_be_required | 20 | 4 | 16 | 0 | 0 | 0 | 
+ | Test| no_pg_sbfe_ln_only | pg_should_be_required | 2154 | 1713 | 441 | 154 | 1786 | 110 | 
+ | Test| no_pg_sbfe_ln_only | pg_should_not_be_required | 145 | 127 | 18 | 12 | 131 | 8 | 
+ | Test| no_pg_sba_ln_only | pg_should_be_required | 522 | 318 | 204 | 68 | 93 | 8 | 
+ | Test| no_pg_sba_ln_only | pg_should_not_be_required | 25 | 13 | 12 | 3 | 5 | 1 | 
+ | Test| no_pg_no_hits | pg_should_be_required | 482 | 292 | 190 | 32 | 482 | 32 | 
+ | Test| no_pg_no_hits | pg_should_not_be_required | 31 | 25 | 6 | 2 | 31 | 2 | 
+ | Test| no_pg_false_sba_fico_hit | pg_should_be_required | 345 | 235 | 110 | 21 | 345 | 21 | 
+ | Test| no_pg_false_sba_fico_hit | pg_should_not_be_required | 4 | 2 | 2 | 0 | 4 | 0 | 
+ | Test| no_pg_false_sba_no_hits | pg_should_be_required | 1851 | 1280 | 571 | 201 | 0 | 0 | 
+ | Test| no_pg_false_sba_no_hits | pg_should_not_be_required | 47 | 31 | 16 | 5 | 0 | 0 | 
+
+
+
+ | Dataset | Segment | Subsegment | total_rows | num_booked | num_non_booked | booked_is_bad | predicted_booked | predicted_booked_is_bad |
+  | Current| pg_sbfe_ln_and_fico | pg_should_be_required | 3463 | 2445 | 1018 | 17 | 2736 | 17 | 
+ | Current| pg_sbfe_ln_and_fico | pg_should_not_be_required | 1 | 1 | 0 | 0 | 1 | 0 | 
+ | Current| pg_sbfe_ln_only | pg_should_be_required | 722 | 491 | 231 | 16 | 611 | 16 | 
+ | Current| pg_sbfe_ln_only | pg_should_not_be_required | 0 | 0 | 0 | 0 | 0 | 0 | 
+ | Current| pg_sba_ln_and_fico | pg_should_be_required | 626 | 192 | 434 | 2 | 203 | 2 | 
+ | Current| pg_sba_ln_and_fico | pg_should_not_be_required | 1 | 1 | 0 | 0 | 1 | 0 | 
+ | Current| pg_sba_ln_only | pg_should_be_required | 158 | 33 | 125 | 1 | 0 | 0 | 
+ | Current| pg_sba_ln_only | pg_should_not_be_required | 1 | 1 | 0 | 0 | 0 | 0 | 
+ | Current| pg_fico_only | pg_should_be_required | 9114 | 5045 | 4069 | 53 | 5548 | 45 | 
+ | Current| pg_fico_only | pg_should_not_be_required | 55 | 33 | 22 | 1 | 40 | 1 | 
+ | Current| pg_no_hits | pg_should_be_required | 1637 | 423 | 1214 | 22 | 0 | 0 | 
+ | Current| pg_no_hits | pg_should_not_be_required | 42 | 15 | 27 | 0 | 0 | 0 | 
+ | Current| no_pg_sbfe_ln_only | pg_should_be_required | 74 | 60 | 14 | 0 | 66 | 0 | 
+ | Current| no_pg_sbfe_ln_only | pg_should_not_be_required | 334 | 275 | 59 | 3 | 314 | 3 | 
+ | Current| no_pg_sba_ln_only | pg_should_be_required | 6 | 3 | 3 | 0 | 1 | 0 | 
+ | Current| no_pg_sba_ln_only | pg_should_not_be_required | 22 | 4 | 18 | 0 | 8 | 0 | 
+ | Current| no_pg_no_hits | pg_should_be_required | 88 | 60 | 28 | 6 | 88 | 6 | 
+ | Current| no_pg_no_hits | pg_should_not_be_required | 146 | 97 | 49 | 4 | 146 | 4 | 
+ | Current| no_pg_false_sba_fico_hit | pg_should_be_required | 23 | 10 | 13 | 0 | 23 | 0 | 
+ | Current| no_pg_false_sba_fico_hit | pg_should_not_be_required | 1 | 1 | 0 | 0 | 1 | 0 | 
+ | Current| no_pg_false_sba_no_hits | pg_should_be_required | 11 | 4 | 7 | 0 | 0 | 0 | 
+ | Current| no_pg_false_sba_no_hits | pg_should_not_be_required | 51 | 18 | 33 | 1 | 0 | 0 | 
+
+
+#### Consistent and Improved Performance in Key Segments:
+
+* **`pg_sbfe_ln_and_fico` & `pg_should_be_required`**: 
+    * Consistent behavior between training and current data.
+    * The model increases bookings without negatively impacting the default rate.
+    * Lift chart shows improved rank ordering and addresses underestimation.
+
+* **`pg_sbfe_ln_only` & `pg_should_be_required`**:
+    * Similar consistency and increased bookings without impacting default rate.
+    * Lift chart is less conclusive due to small segment size, suggesting potential low rank ordering and underestimation of PD.
+
+* **`pg_sba_ln_and_fico`, `pg_sba_ln_only`, & `pg_fico_only` (all with `pg_should_be_required`)**:
+    * Similar trends of increased bookings and stable default rates.
+    * Small segment sizes in current data limit lift chart interpretability.
+    * However, `pg_fico_only` being the largest segment shows consistent improvement in booking and reduction in default rate with better rank ordering and some underestimation in the lift chart.
+
+#### Inconsistencies in `no_pg` Segments:
+
+* **`no_pg_sbfe_ln_only`, `no_pg_sba_ln_only`**:
+    * Large and inconsistent segments in the training data, likely due to mislabeling of `pg_required_c`.
+    * Current data shows greater consistency and smaller sizes.
+
+* **`no_pg_sbfe_ln_only` & `pg_should_be_required`**:
+    * Over-prediction in current data, but the segment remains small.
+
+* **`no_pg_sbfe_ln_only` & `pg_should_not_be_required`**:
+    * Shows some rank ordering and underestimation of the default rate.
+
+* **`no_pg_sba_ln_only` (both subsegments)**:
+    * Too small in current data for reliable lift chart interpretation.
+
+
+#### Overall:
+
+* The model demonstrates good performance in the most crucial segments.
+* The `pg_subsegment` variable effectively addresses the changing definition of `pg_required_c`.
+* However, external manual controls are recommended for the `no_pg` segments to mitigate remaining inconsistencies.
+* Maintaining a standardized definition of `pg_required_c` is crucial for reducing future issues.
