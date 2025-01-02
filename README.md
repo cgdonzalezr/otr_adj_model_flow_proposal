@@ -851,7 +851,7 @@ The impact on risk grades is equally significant. The following tables show the 
 
 **Model without EM Algorithm:**
 
-| FICO Band | 500 | 550 | 600 | 650 | 700 | 750 | 800 | 850 | 900 |
+| FICO/SBFE | 500 | 550 | 600 | 650 | 700 | 750 | 800 | 850 | 900 |
 | --------- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 600       | 7   | 6   | 5   | 4   | 4   | 3   | 2   | 2   | 1   |
 | 620       | 6   | 6   | 5   | 4   | 3   | 2   | 2   | 1   | 1   |
@@ -870,7 +870,7 @@ The impact on risk grades is equally significant. The following tables show the 
 
 **Model with EM Algorithm:**
 
-| FICO Band | 500 | 550 | 600 | 650 | 700 | 750 | 800 | 850 | 900 |
+| FICO/SBFE | 500 | 550 | 600 | 650 | 700 | 750 | 800 | 850 | 900 |
 | --------- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 600       | 7   | 7   | 7   | 7   | 7   | 7   | 7   | 7   | 7   |
 | 620       | 7   | 7   | 7   | 7   | 6   | 6   | 6   | 6   | 6   |
