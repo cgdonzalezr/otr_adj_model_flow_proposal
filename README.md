@@ -687,6 +687,17 @@ The original model, trained without incorporating information from rejected appl
 *   **Booking Rate:** Demonstrated a higher booking rate compared to the models incorporating reject inference on the current dataset. This suggests a broader acceptance strategy under the original model.
 *   **Default Rate:** Exhibited a lower default rate than the reject inference models on the current data. This indicates that the model effectively identified and avoided high-risk applicants within the accepted pool.
 *   **Lift Charts:** Analysis of lift charts on the test data revealed a tendency to underestimate the default rate, potentially influenced by the high default environment of 2022. However, when applied to the current data, the model generally showed an overestimation of the Probability of Default (PD) for booked applications. This suggests a potential shift in the risk profile of applicants over time.
+
+**Test data:**
+
+![image](img/pg_sbfe_ln_and_fico_test_no_reject.png)
+
+**Current data:**
+
+![image](img/pg_sbfe_ln_and_fico_scoring_no_reject.png)
+
+
+
 *   **Logistic Regression Parameters:** The coefficients of the logistic regression model provide insights into the feature importance and direction of their impact on the probability of default. For instance, negative coefficients for `ln_score_z` and `fico_score_filled_z` align with expectations, indicating that higher scores are associated with lower default risk. The intercept values vary across segments, reflecting the baseline risk for each group.
 
 | segment | intercept | ln_score_z | fico_score_filled_z | fico_score_z |
@@ -711,6 +722,16 @@ Applying the Hard-Cutoff augmentation technique significantly altered the model'
 *   **Booking Rate:** The booking rate decreased substantially compared to the original model. This indicates that the model, after incorporating information from rejected applicants labeled using the hard-cutoff, became more stringent in its approval criteria.
 *   **Default Rate:**  A reduction in the default rate was observed. This is expected as the model now incorporates a segment of the previously rejected population deemed "bad," leading to a more refined identification of high-risk applicants.
 *   **Lift Charts:** The underestimation observed in the original model on the test data was mitigated to some extent. However, the application to current data resulted in a pronounced overestimation of PD. This suggests that while the technique incorporates information from rejects, the hard cutoff might lead to an overly pessimistic assessment of their risk.
+
+**Test data:**
+
+![image](img/pg_sbfe_ln_and_fico_test_hard_cutoff.png)
+
+**Current data:**
+
+![image](img/pg_sbfe_ln_and_fico_scoring_hard_cutoff.png)
+
+
 *   **Logistic Regression Parameters:** Examining the coefficients reveals notable changes. The intercepts generally decreased, suggesting a higher baseline for the probability of default. The coefficients for `fico_score_filled_z` show a substantial decrease (more negative), indicating a stronger negative impact of this feature on the probability of default after augmentation. This implies the model now places a greater emphasis on the FICO score in distinguishing between good and bad applicants, potentially influenced by the characteristics of the rejected applicants labeled as "bad." This observation aligns with the AUC results, where for the 'pg_and_1_plus_sbfe_tradeline_and_fico_hit' segment, the AUC decreased by 3 points (from 0.7652 to 0.7350), indicating a reduction in the model's ability to discriminate between positive and negative cases, possibly due to the more conservative approach driven by the hard cutoff.
 
 
@@ -736,6 +757,16 @@ The application of the Expectation-Maximization (EM) algorithm resulted in the m
 *   **Booking Rate:** The booking rate experienced a dramatic decrease, with the model declining the vast majority of applications. This indicates that the iterative process of the EM algorithm, in this instance, converged towards a model that strongly favors rejection.
 *   **Default Rate:**  The default rate approached zero. While seemingly positive, this outcome is achieved at the significant cost of severely limiting lending activity, potentially missing out on many creditworthy applicants.
 *   **Lift Charts:**  The lift charts showed an extreme overprediction of the default rate for the small number of applications that were booked. This signifies that the model is overly cautious and misclassifying a large proportion of potentially good applicants as bad.
+
+
+**Test data:**
+
+![image](img/pg_sbfe_ln_and_fico_test_em.png)
+
+**Current data:**
+
+![image](img/pg_sbfe_ln_and_fico_scoring_en.png)
+
 *   **Logistic Regression Parameters:** The coefficients underwent substantial changes. The intercept values generally increased, contrasting with the Hard-Cutoff method and indicating a much higher threshold for approval. While the coefficients for `ln_score_z` remained negative, their magnitude often decreased, suggesting a reduced influence of this feature in the final model. This potentially signifies the model is heavily relying on other factors or is simply setting a very high bar for all applicants regardless of their scores. This is supported by the AUC results. For the 'pg_and_1_plus_sbfe_tradeline_and_fico_hit' segment, the AUC saw a more significant drop of 6 points (from 0.7652 to 0.7096) when using the EM algorithm compared to the hard cutoff. This larger decrease suggests a more profound negative impact on the model's discriminatory power, aligning with the extremely conservative behavior and the potential downplaying of individual risk factors like ln_score_z as indicated by the logistic regression parameters. Similarly, other segments like 'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit' saw a decrease in AUC from 0.5232 to 0.4813, and 'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit' experienced a substantial drop from 0.5806 to 0.4194, reinforcing the EM algorithm's tendency towards a highly risk-averse model with reduced accuracy in distinguishing between good and bad applicants in these segments.
 
 
