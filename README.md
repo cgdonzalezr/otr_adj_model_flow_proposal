@@ -765,7 +765,7 @@ The application of the Expectation-Maximization (EM) algorithm resulted in the m
 
 **Current data:**
 
-![image](img/pg_sbfe_ln_and_fico_scoring_en.png)
+![image](img/pg_sbfe_ln_and_fico_scoring_em.png)
 
 *   **Logistic Regression Parameters:** The coefficients underwent substantial changes. The intercept values generally increased, contrasting with the Hard-Cutoff method and indicating a much higher threshold for approval. While the coefficients for `ln_score_z` remained negative, their magnitude often decreased, suggesting a reduced influence of this feature in the final model. This potentially signifies the model is heavily relying on other factors or is simply setting a very high bar for all applicants regardless of their scores. This is supported by the AUC results. For the 'pg_and_1_plus_sbfe_tradeline_and_fico_hit' segment, the AUC saw a more significant drop of 6 points (from 0.7652 to 0.7096) when using the EM algorithm compared to the hard cutoff. This larger decrease suggests a more profound negative impact on the model's discriminatory power, aligning with the extremely conservative behavior and the potential downplaying of individual risk factors like ln_score_z as indicated by the logistic regression parameters. Similarly, other segments like 'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit' saw a decrease in AUC from 0.5232 to 0.4813, and 'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit' experienced a substantial drop from 0.5806 to 0.4194, reinforcing the EM algorithm's tendency towards a highly risk-averse model with reduced accuracy in distinguishing between good and bad applicants in these segments.
 
