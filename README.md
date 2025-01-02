@@ -762,3 +762,102 @@ The application of the Expectation-Maximization (EM) algorithm resulted in the m
 The original model, despite its limitations in handling rejected applications, demonstrated a more favorable balance between booking rate and default rate on the current data. This is further supported by the observation that the original model generally had higher AUC scores across the segments where reject inference was applied, indicating better discriminatory power. This suggests that the assumptions made by the reject inference methods about the risk profile of rejected applicants might not accurately reflect the current reality of the lending environment. The EM algorithm, in particular, exhibited an extreme tendency towards risk aversion, severely limiting its practical applicability in this context.
 
 The observation of significant overestimation of PD on the current data by the reject inference models, in contrast to the underestimation on historical test data, underscores the importance of regularly evaluating and recalibrating models to account for evolving risk landscapes. It also suggests that the decision to employ reject inference should be carefully considered and justified by empirical evidence demonstrating its benefit for the specific dataset and business context. In this particular case, the evidence points towards a preference for the model trained solely on accepted applications, as it appears to provide a more accurate estimation of PD and a more balanced approach to lending decisions. Further investigation into the Fuzzy Augmentation method is warranted to assess its potential as a less aggressive alternative.
+
+
+## 01/02/2025
+
+### Impact of Reject Inference with EM Algorithm on PD matrix
+
+Again, this implementation demonstrates a drastic increase in the predicted probability of default (PD) across different FICO and SBFE (Small Business Financial Exchange) score bands. This change subsequently affects the assigned risk grades and significantly reduces the booking rate.
+
+#### Probability of Default (PD) Shift
+
+The following tables illustrate the predicted PD for the segment `pg_sbfe_ln_and_fico` before and after applying the EM algorithm for reject inference.
+
+**Model without Reject Inference:**
+
+| FICO Band | 500      | 550      | 600      | 650      | 700      | 750      | 800      | 850      | 900      |
+| --------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- |
+| 600       | 57.06%   | 38.63%   | 22.97%   | 12.37%   | 6.27%    | 3.07%    | 1.48%    | 0.71%    | 0.34%    |
+| 620       | 49.49%   | 31.70%   | 18.02%   | 9.43%    | 4.70%    | 2.28%    | 1.09%    | 0.52%    | 0.25%    |
+| 640       | 41.95%   | 25.50%   | 13.95%   | 7.13%    | 3.51%    | 1.69%    | 0.81%    | 0.39%    | 0.18%    |
+| 660       | 34.76%   | 20.15%   | 10.68%   | 5.36%    | 2.61%    | 1.25%    | 0.60%    | 0.28%    | 0.13%    |
+| 680       | 28.21%   | 15.69%   | 8.10%    | 4.01%    | 1.94%    | 0.93%    | 0.44%    | 0.21%    | 0.10%    |
+| 700       | 22.47%   | 12.07%   | 6.11%    | 2.99%    | 1.44%    | 0.69%    | 0.33%    | 0.15%    | 0.07%    |
+| 720       | 17.61%   | 9.19%    | 4.58%    | 2.22%    | 1.06%    | 0.51%    | 0.24%    | 0.11%    | 0.05%    |
+| 740       | 13.61%   | 6.95%    | 3.42%    | 1.65%    | 0.79%    | 0.37%    | 0.18%    | 0.08%    | 0.04%    |
+| 760       | 10.41%   | 5.22%    | 2.54%    | 1.22%    | 0.58%    | 0.28%    | 0.13%    | 0.06%    | 0.03%    |
+| 780       | 7.89%    | 3.90%    | 1.89%    | 0.90%    | 0.43%    | 0.20%    | 0.10%    | 0.05%    | 0.02%    |
+| 800       | 5.94%    | 2.91%    | 1.40%    | 0.67%    | 0.32%    | 0.15%    | 0.07%    | 0.03%    | 0.02%    |
+| 820       | 4.45%    | 2.16%    | 1.04%    | 0.49%    | 0.23%    | 0.11%    | 0.05%    | 0.02%    | 0.01%    |
+| 840       | 3.32%    | 1.60%    | 0.77%    | 0.36%    | 0.17%    | 0.08%    | 0.04%    | 0.02%    | 0.01%    |
+| 850       | 2.87%    | 1.38%    | 0.66%    | 0.31%    | 0.15%    | 0.07%    | 0.03%    | 0.02%    | 0.01%    |
+
+**Model with EM Algorithm for Reject Inference:**
+
+| FICO Band | 500      | 550      | 600      | 650      | 700      | 750      | 800      | 850      | 900      |
+| --------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- |
+| 600       | 62.85%   | 61.35%   | 59.83%   | 58.29%   | 56.73%   | 55.16%   | 53.58%   | 52.00%   | 50.40%   |
+| 620       | 54.87%   | 53.29%   | 51.70%   | 50.11%   | 48.52%   | 46.93%   | 45.34%   | 43.77%   | 42.21%   |
+| 640       | 46.63%   | 45.05%   | 43.48%   | 41.92%   | 40.38%   | 38.85%   | 37.35%   | 35.87%   | 34.42%   |
+| 660       | 38.57%   | 37.08%   | 35.60%   | 34.16%   | 32.74%   | 31.35%   | 30.00%   | 28.67%   | 27.39%   |
+| 680       | 31.10%   | 29.75%   | 28.43%   | 27.16%   | 25.91%   | 24.71%   | 23.54%   | 22.42%   | 21.33%   |
+| 700       | 24.49%   | 23.33%   | 22.21%   | 21.13%   | 20.09%   | 19.08%   | 18.12%   | 17.19%   | 16.31%   |
+| 720       | 18.90%   | 17.95%   | 17.03%   | 16.15%   | 15.30%   | 14.49%   | 13.72%   | 12.98%   | 12.28%   |
+| 740       | 14.35%   | 13.58%   | 12.85%   | 12.16%   | 11.49%   | 10.86%   | 10.26%   | 9.69%    | 9.14%    |
+| 760       | 10.75%   | 10.15%   | 9.58%    | 9.05%    | 8.53%    | 8.05%    | 7.59%    | 7.16%    | 6.74%    |
+| 780       | 7.96%    | 7.51%    | 7.08%    | 6.67%    | 6.28%    | 5.92%    | 5.57%    | 5.25%    | 4.94%    |
+| 800       | 5.85%    | 5.51%    | 5.19%    | 4.89%    | 4.60%    | 4.33%    | 4.07%    | 3.83%    | 3.60%    |
+| 820       | 4.28%    | 4.02%    | 3.79%    | 3.56%    | 3.35%    | 3.15%    | 2.96%    | 2.78%    | 2.61%    |
+| 840       | 3.11%    | 2.93%    | 2.75%    | 2.58%    | 2.43%    | 2.28%    | 2.14%    | 2.01%    | 1.89%    |
+| 850       | 2.65%    | 2.49%    | 2.34%    | 2.20%    | 2.07%    | 1.94%    | 1.82%    | 1.71%    | 1.61%    |
+
+**Observation:** The PD values across all FICO and SBFE bands have dramatically increased after applying the EM algorithm for reject inference. For instance, the PD for a customer with a FICO score of 600 and an SBFE score of 600 jumps from 22.97% to 59.83%.
+
+#### Risk Grade Changes
+
+The impact on risk grades is equally significant. The following tables show the assigned risk grades (on a new scale) before and after implementing the EM algorithm.
+
+**Model without EM Algorithm:**
+
+| FICO Band | 500 | 550 | 600 | 650 | 700 | 750 | 800 | 850 | 900 |
+| --------- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 600       | 7   | 6   | 5   | 4   | 4   | 3   | 2   | 2   | 1   |
+| 620       | 6   | 6   | 5   | 4   | 3   | 2   | 2   | 1   | 1   |
+| 640       | 6   | 6   | 5   | 4   | 3   | 2   | 2   | 1   | 1   |
+| 660       | 6   | 5   | 4   | 3   | 3   | 2   | 1   | 1   | 1   |
+| 680       | 6   | 5   | 4   | 3   | 2   | 2   | 1   | 1   | 1   |
+| 700       | 5   | 4   | 4   | 3   | 2   | 2   | 1   | 1   | 1   |
+| 720       | 5   | 4   | 3   | 2   | 2   | 1   | 1   | 1   | 1   |
+| 740       | 5   | 4   | 3   | 2   | 2   | 1   | 1   | 1   | 1   |
+| 760       | 4   | 3   | 3   | 2   | 1   | 1   | 1   | 1   | 1   |
+| 780       | 4   | 3   | 2   | 2   | 1   | 1   | 1   | 1   | 1   |
+| 800       | 4   | 3   | 2   | 2   | 1   | 1   | 1   | 1   | 1   |
+| 820       | 3   | 2   | 2   | 1   | 1   | 1   | 1   | 1   | 1   |
+| 840       | 3   | 2   | 2   | 1   | 1   | 1   | 1   | 1   | 1   |
+| 850       | 3   | 2   | 1   | 1   | 1   | 1   | 1   | 1   | 1   |
+
+**Model with EM Algorithm:**
+
+| FICO Band | 500 | 550 | 600 | 650 | 700 | 750 | 800 | 850 | 900 |
+| --------- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 600       | 7   | 7   | 7   | 7   | 7   | 7   | 7   | 7   | 7   |
+| 620       | 7   | 7   | 7   | 7   | 6   | 6   | 6   | 6   | 6   |
+| 640       | 6   | 6   | 6   | 6   | 6   | 6   | 6   | 6   | 6   |
+| 660       | 6   | 6   | 6   | 6   | 6   | 6   | 6   | 6   | 6   |
+| 680       | 6   | 6   | 6   | 6   | 6   | 6   | 5   | 5   | 5   |
+| 700       | 6   | 5   | 5   | 5   | 5   | 5   | 5   | 5   | 5   |
+| 720       | 5   | 5   | 5   | 5   | 5   | 5   | 5   | 5   | 4   |
+| 740       | 5   | 5   | 5   | 4   | 4   | 4   | 4   | 4   | 4   |
+| 760       | 4   | 4   | 4   | 4   | 4   | 4   | 4   | 4   | 4   |
+| 780       | 4   | 4   | 4   | 4   | 4   | 4   | 4   | 3   | 3   |
+| 800       | 4   | 3   | 3   | 3   | 3   | 3   | 3   | 3   | 3   |
+| 820       | 3   | 3   | 3   | 3   | 3   | 3   | 3   | 3   | 3   |
+| 840       | 3   | 3   | 3   | 3   | 2   | 2   | 2   | 2   | 2   |
+| 850       | 3   | 3   | 2   | 2   | 2   | 2   | 2   | 2   | 2   |
+
+**Observation:**  The risk grades have significantly shifted towards higher risk categories after applying the EM algorithm. Many segments that were previously considered lower risk are now classified as higher risk.
+
+#### Impact on Booking Rate
+
+The increased PD and the shift towards higher risk grades have resulted in a dramatic decrease in the booking rate. The model, trained with the EM algorithm for reject inference, now declines the vast majority of applications. This indicates that the iterative process of the EM algorithm, in this instance, converged towards a model that strongly favors rejection. The model has learned to identify characteristics within the rejected applications that are indicative of higher default risk, leading to a more conservative approach to approving new applications.
