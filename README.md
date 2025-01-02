@@ -915,6 +915,7 @@ This segmentation splits the data based on the number of trucks and years in bus
 The following table summarizes the model's performance across different segments and subsegments:
 
 | Dataset | Segment | Subsegment | total_rows | num_booked | num_non_booked | booked_is_bad | predicted_booked | predicted_booked_is_bad |
+| --------- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Train | pg_sbfe_ln_and_fico | pg_should_be_required | 2318 | 1858 | 460 | 34 | 1979 | 21 | 
 | Train | pg_sbfe_ln_and_fico | pg_should_not_be_required | 149 | 112 | 37 | 7 | 125 | 5 | 
 |Train | pg_sbfe_ln_only | pg_should_be_required | 215 | 55 | 160 | 3 | 172 | 1 | 
@@ -940,6 +941,7 @@ The following table summarizes the model's performance across different segments
 
 
 | Dataset | Segment | Subsegment | total_rows | num_booked | num_non_booked | booked_is_bad | predicted_booked | predicted_booked_is_bad |
+| --------- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Test | pg_sbfe_ln_and_fico | pg_should_be_required | 1271 | 938 | 333 | 66 | 971 | 40 | 
 | Test | pg_sbfe_ln_and_fico | pg_should_not_be_required | 73 | 50 | 23 | 3 | 59 | 3 | 
 | Test | pg_sbfe_ln_only | pg_should_be_required | 177 | 31 | 146 | 0 | 125 | 0 | 
@@ -966,6 +968,7 @@ The following table summarizes the model's performance across different segments
 
 
 | Dataset | Segment | Subsegment | total_rows | num_booked | num_non_booked | booked_is_bad | predicted_booked | predicted_booked_is_bad |
+| --------- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Current | pg_sbfe_ln_and_fico | pg_should_be_required | 3463 | 2445 | 1018 | 17 | 2736 | 17 | 
 | Current | pg_sbfe_ln_and_fico | pg_should_not_be_required | 1 | 1 | 0 | 0 | 1 | 0 | 
 | Current | pg_sbfe_ln_only | pg_should_be_required | 722 | 491 | 231 | 16 | 611 | 16 | 
