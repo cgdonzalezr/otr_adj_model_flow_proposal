@@ -1031,3 +1031,51 @@ The following table summarizes the model's performance across different segments
 * The `pg_subsegment` variable effectively addresses the changing definition of `pg_required_c`.
 * However, external manual controls are recommended for the `no_pg` segments to mitigate remaining inconsistencies.
 * Maintaining a standardized definition of `pg_required_c` is crucial for reducing future issues.
+
+## 01/03/2025 1:30 pm
+
+### Reject Inference Analysis and Model Performance in 'Different' Current data
+
+This section details the analysis performed on reject inference techniques and their impact on model performance.  We observed discrepancies in the results and investigated the influence of the current data period used for evaluation.
+
+#### Initial Observations and Issue
+
+The initial evaluation of reject inference methods (Hard Cutoff augmentation and the EM algorithm) using the current data from **2024-02-01 (model development date) to 2024-12-10 (last execution of the master data)** suggested an overestimation of Probability of Default (PD). This was attributed to the relatively short observation period for applications within this timeframe.  Many applications were less than one year old, lacking sufficient time to fully demonstrate their default behavior. This shorter timeframe skewed the results and likely contributed to the observed overestimation, especially with the Hard Cutoff and EM algorithm methods.
+
+#### Adjusted Current Data Period
+
+To address this issue, we implemented a new current data period from **2023-01-01 to 2023-12-10**. This provided a full 12-month observation window for all applications, allowing for a more accurate assessment of default behavior.  
+
+#### Results with Adjusted Data Period
+
+Analyzing model performance with this adjusted dataset yielded the following observations for the three methodologies:
+
+* **No Reject Inference:**  The model demonstrates rank ordering but slightly underestimates the PD.
+
+![image](img/pg_sbfe_ln_and_fico_scoring_no_reject_new_current_data.png)
+
+* **Hard Cutoff Augmentation:** The model exhibits rank ordering and provides a more precise estimation of the PD compared to the no reject inference approach.
+
+![image](img/pg_sbfe_ln_and_fico_scoring_hard_cutoff_new_current_data.png)
+
+
+* **EM Algorithm:** The model still shows an overestimation of the PD and a decrease in the booking rate.
+
+![image](img/pg_sbfe_ln_and_fico_scoring_em_new_current_data.png)
+
+
+
+#### Results with Original Data Period (2024-02-01 to 2024-12-10)
+
+Revisiting the original current data period, the Hard Cutoff augmentation continues to show a better PD estimation compared to the other methods. However, the caveat remains that this dataset still suffers from a limited observation window, potentially impacting the long-term accuracy of the PD estimation.
+
+
+#### Conclusions and Next Steps
+
+Given the findings, we have two primary options:
+
+1. **Proceed with Hard Cutoff Augmentation:** This method provides the most accurate PD estimation within the limitations of the available data. Recognizing that the current data still requires more time to mature, we can proceed cautiously with this approach.
+
+2. **Re-evaluate EM Algorithm Implementation:** The persistent overestimation of PD with the EM algorithm suggests potential errors in its implementation or underlying assumptions. A thorough review of the algorithm's implementation is warranted to identify and rectify any potential issues.
+
+Further investigation and monitoring of model performance are crucial as more data becomes available.  This will allow us to refine the chosen approach and ensure the long-term accuracy and stability of the PD estimations.

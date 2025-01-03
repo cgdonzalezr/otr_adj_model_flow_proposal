@@ -103,6 +103,8 @@ MODEL_APPLICATION_QUARTER = 4
 
 # Model deployment date
 MODEL_DEPLOYMENT_DATE = "2024-02-16"
+# MODEL_DEPLOYMENT_DATE = "2023-01-01"
+
 
 # Model score valid ranges, to remove error codes
 RANGE_LN_SCORE = [500, 900]
