@@ -933,8 +933,8 @@ def lift_chart_plot(
     # Mirror plot and add event rates
     plt2 = plt.twinx()
     plt2.set_ylabel("Event rate")
-    plt2.set_ylim(ymin=0, ymax=decile_df["DEFAULT_RATE"].max() + 0.05)
-    plt2.set_yticks(np.arange(0, decile_df["DEFAULT_RATE"].max() + 0.05, step=0.05))
+    plt2.set_ylim(ymin=0, ymax=max(decile_df["AVG_PROB"].max(), decile_df["DEFAULT_RATE"].max()) + 0.05)
+    plt2.set_yticks(np.arange(0, max(decile_df["AVG_PROB"].max(), decile_df["DEFAULT_RATE"].max()) + 0.05, step=0.05))
     plt2.plot(
         decile_df.index, decile_df["DEFAULT_RATE"], label="event_rate", marker="o"
     )
