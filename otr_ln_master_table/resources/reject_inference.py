@@ -165,6 +165,12 @@ def em_algorithm(xf, xnf, yf, max_iterations=100, convergence_threshold=1e-5):
     """
     print("Expectation Maximization (EM) algorithm")
 
+    # Num of accepts
+    print(f"Number of accepts: {len(yf)}")
+
+    # Num of rejects
+    print(f"Number of rejects: {len(xnf)}")
+
     # Ensure yf is numeric (0 for good, 1 for bad)
     yf_numeric = pd.Series(np.where(yf == 0, 0, 1), index=yf.index)
 
