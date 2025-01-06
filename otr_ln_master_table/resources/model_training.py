@@ -652,6 +652,90 @@ def predict_with_model(df, parameters_df, segment):
 
 
 
+def predict_and_assign_risk_grade_for_segment(segment, parameters, fico_scores, ln_scores, normalization_dict, new_pd_risk_grade_thresholds):
+         """
+         Generates predictions and assigns risk grades for the given segment across specified fico and ln_score ranges.
+         """
+         params = parameters[parameters['segment'] == segment].iloc[0].to_dict()
+         predictions = None
+         
+         # Normalization inside the loop
+         normalized_fico_scores = fico_scores
+         normalized_fico_scores_filled = fico_scores
+         normalized_ln_scores = ln_scores
+         
+         if normalization_dict.get(segment) is not None:
+             if "fico_score" in normalization_dict[segment]:
+                 mean = normalization_dict[segment]["fico_score"]["mean"]
+                 std = normalization_dict[segment]["fico_score"]["std"]
+                 if std != 0:
+                     normalized_fico_scores = [(score - mean) / std for score in fico_scores]
+         
+             if "fico_score_filled" in normalization_dict[segment]: # Normalize filled scores separately
+                  mean = normalization_dict[segment]["fico_score_filled"]["mean"]
+                  std = normalization_dict[segment]["fico_score_filled"]["std"]
+                  if std != 0:
+                       normalized_fico_scores_filled = [(score - mean) / std for score in fico_scores]
+         
+             if "ln_score" in normalization_dict[segment]:
+                  mean = normalization_dict[segment]["ln_score"]["mean"]
+                  std = normalization_dict[segment]["ln_score"]["std"]
+                  if std != 0:
+                      normalized_ln_scores = [(score - mean) / std for score in ln_scores]
+         
+         if pd.isna(params['ln_score_z']) and pd.isna(params['fico_score_filled_z']):  # Constant only model
+             predictions = predict_with_model(pd.DataFrame(), parameters, segment)
+             print(f"Predictions for segment: {segment}")
+             print(f"Constant prediction: {predictions}")
+         
+         
+         elif pd.isna(params['fico_score_filled_z']):  # ln_score only
+             predictions = predict_with_model(pd.DataFrame({'ln_score_z': normalized_ln_scores}), parameters, segment)
+             print(f"Predictions for segment: {segment}")
+             for i, prediction in enumerate(predictions):
+                 print(f"{normalized_ln_scores[i]}: {prediction}")  # Use normalized ln_scores
+         
+         
+         
+         elif pd.isna(params['ln_score_z']):  # fico_score only
+             fico_score_col = 'fico_score_z' if segment == 'pg_fico_only' else 'fico_score_filled_z' # Make sure column names align in parameters and normalization_dict
+             predictions = predict_with_model(pd.DataFrame({fico_score_col: normalized_fico_scores}), parameters, segment)
+             print(f"Predictions for segment: {segment}")
+             print(predictions)
+         
+         
+         
+         else:  # Both ln_score and fico_score
+             predictions = pd.DataFrame(index=normalized_fico_scores_filled, columns=normalized_ln_scores)
+             for fico in normalized_fico_scores_filled:
+                 for ln in normalized_ln_scores:
+                     fico_col = 'fico_score_z' if segment == 'pg_fico_only' else 'fico_score_filled_z'
+                     data = {fico_col: [fico], 'ln_score_z': [ln]}
+                     prediction = predict_with_model(pd.DataFrame(data), parameters, segment)
+                     predictions.loc[fico, ln] = prediction.iloc[0]
+                     
+             predictions.index = list(zip(fico_scores, normalized_fico_scores_filled))
+             predictions.columns = list(zip(ln_scores, normalized_ln_scores))
+         
+             print(f"Predictions for segment: {segment}")
+             print(predictions)
+         
+         
+         # Risk Grade Matrix/Series Creation
+         if predictions is not None:
+             if isinstance(predictions, pd.Series):
+                 risk_grades = predictions.apply(lambda x: assign_risk_grade(x, new_pd_risk_grade_thresholds))
+                 print(f"\nRisk Grade Series for segment: {segment}")
+                 print(risk_grades)
+             elif isinstance(predictions, pd.DataFrame):
+                 risk_grade_matrix = predictions.applymap(lambda x: assign_risk_grade(x, new_pd_risk_grade_thresholds))
+                 print(f"\nRisk Grade Matrix for segment: {segment}")
+                 print(risk_grade_matrix)
+         
+             print("-" * 50)
+
+
+
 def compute_decile_table(
         df: pd.DataFrame,
         y_pred_proba: str,
@@ -913,3 +997,648 @@ def compute_risk_grade_table(
     risk_grade_df = risk_grade_df[cols_to_display]
 
     return risk_grade_df
+
+
+
+
+def generate_lift_chart(data, title, score_column, target_column, n_bins, segment, chart_type, risk_grade_thresholds = None, risk_grade_column = None):
+    """
+    Generates a lift chart based on specified parameters.
+    """
+    if chart_type == 'decile':
+        table = compute_decile_table(data, score_column, target_column, n_bins, segment)
+        x_axis_column = 'PROB_RANGE'
+    elif chart_type == 'risk_grade':
+          data['risk_grades'] = data[data['booked']][score_column].apply(lambda x: assign_risk_grade(x, risk_grade_thresholds))
+          table = compute_risk_grade_table(data, score_column, target_column, n_bins, segment, risk_grade_column)
+          x_axis_column = risk_grade_column
+    else:
+        print(f"Invalid chart type: {chart_type}. Skipping chart.")
+        return
+    
+    lift_chart_plot(title, table, x_axis_column)
+
+
+def generate_all_lift_charts(data_test_scored, data_scoring_scored, new_pd_risk_grade_thresholds):
+    """
+    Generates all lift charts using the reusable generate_lift_chart function.
+    """
+    chart_params = [
+      # pd_pg_sbfe_ln_and_fico
+        {
+            'title': 'Test Data - pd_pg_sbfe_ln_and_fico - Decile',
+            'data': data_test_scored[(data_test_scored['booked']) & (data_test_scored['pg_subsegment'] == 'pg_should_be_required')],
+            'score_column': 'pd_pg_sbfe_ln_and_fico',
+            'target_column': 'is_bad',
+            'n_bins': 20,
+            'segment': 'pg_and_1_plus_sbfe_tradeline_and_fico_hit',
+            'chart_type': 'decile',
+        },
+        {
+            'title': 'Test Data - pd_pg_sbfe_ln_and_fico - Decile',
+            'data': data_test_scored[(data_test_scored['booked']) & (data_test_scored['pg_subsegment'] == 'pg_should_not_be_required')],
+            'score_column': 'pd_pg_sbfe_ln_and_fico',
+            'target_column': 'is_bad',
+            'n_bins': 20,
+            'segment': 'pg_and_1_plus_sbfe_tradeline_and_fico_hit',
+            'chart_type': 'decile',
+        },
+        {
+            'title': 'Scoring Data - pd_pg_sbfe_ln_and_fico - Decile',
+            'data': data_scoring_scored[(data_scoring_scored['booked']) & (data_scoring_scored['pg_subsegment'] == 'pg_should_be_required')],
+            'score_column': 'pd_pg_sbfe_ln_and_fico',
+            'target_column': 'is_bad',
+            'n_bins': 20,
+            'segment': 'pg_and_1_plus_sbfe_tradeline_and_fico_hit',
+            'chart_type': 'decile',
+        },
+
+          {
+            'title': 'Test Data - pd_pg_sbfe_ln_and_fico - Risk Grade',
+            'data': data_test_scored[(data_test_scored['booked']) & (data_test_scored['risk_grade_path'] == 'pg_and_1_plus_sbfe_tradeline_and_fico_hit') & (data_test_scored['pg_subsegment'] == 'pg_should_be_required')],
+            'score_column': 'pd_pg_sbfe_ln_and_fico',
+            'target_column': 'is_bad',
+            'n_bins': 20,
+             'segment': 'pg_and_1_plus_sbfe_tradeline_and_fico_hit',
+             'chart_type': 'risk_grade',
+             'risk_grade_thresholds': new_pd_risk_grade_thresholds,
+             'risk_grade_column': 'risk_grades'
+        },
+        
+       {
+            'title': 'Test Data - pd_pg_sbfe_ln_and_fico - Risk Grade',
+            'data': data_test_scored[(data_test_scored['booked']) & (data_test_scored['risk_grade_path'] == 'pg_and_1_plus_sbfe_tradeline_and_fico_hit') & (data_test_scored['pg_subsegment'] == 'pg_should_not_be_required')],
+            'score_column': 'pd_pg_sbfe_ln_and_fico',
+            'target_column': 'is_bad',
+            'n_bins': 20,
+             'segment': 'pg_and_1_plus_sbfe_tradeline_and_fico_hit',
+             'chart_type': 'risk_grade',
+             'risk_grade_thresholds': new_pd_risk_grade_thresholds,
+             'risk_grade_column': 'risk_grades'
+        },
+            {
+            'title': 'Scoring Data - pd_pg_sbfe_ln_and_fico - Risk Grade',
+            'data': data_scoring_scored[(data_scoring_scored['booked']) & (data_scoring_scored['risk_grade_path'] == 'pg_and_1_plus_sbfe_tradeline_and_fico_hit') & (data_scoring_scored['pg_subsegment'] == 'pg_should_be_required')],
+            'score_column': 'pd_pg_sbfe_ln_and_fico',
+            'target_column': 'is_bad',
+            'n_bins': 20,
+             'segment': 'pg_and_1_plus_sbfe_tradeline_and_fico_hit',
+             'chart_type': 'risk_grade',
+             'risk_grade_thresholds': new_pd_risk_grade_thresholds,
+             'risk_grade_column': 'risk_grades'
+        },
+
+         # pd_pg_sbfe_ln_only
+        {
+            'title': 'Test Data - pd_pg_sbfe_ln_only - Decile',
+            'data': data_test_scored[(data_test_scored['booked']) & (data_test_scored['pg_subsegment'] == 'pg_should_be_required')],
+            'score_column': 'pd_pg_sbfe_ln_only',
+            'target_column': 'is_bad',
+            'n_bins': 20,
+             'segment': 'pg_and_1_plus_sbfe_tradeline_and_fico_no_hit',
+             'chart_type': 'decile',
+        },
+        {
+            'title': 'Test Data - pd_pg_sbfe_ln_only - Decile',
+            'data': data_test_scored[(data_test_scored['booked']) & (data_test_scored['pg_subsegment'] == 'pg_should_not_be_required')],
+            'score_column': 'pd_pg_sbfe_ln_only',
+            'target_column': 'is_bad',
+            'n_bins': 20,
+            'segment': 'pg_and_1_plus_sbfe_tradeline_and_fico_no_hit',
+            'chart_type': 'decile',
+        },
+        {
+            'title': 'Scoring Data - pd_pg_sbfe_ln_only - Decile',
+            'data': data_scoring_scored[(data_scoring_scored['booked']) & (data_scoring_scored['pg_subsegment'] == 'pg_should_be_required')],
+            'score_column': 'pd_pg_sbfe_ln_only',
+            'target_column': 'is_bad',
+            'n_bins': 20,
+             'segment': 'pg_and_1_plus_sbfe_tradeline_and_fico_no_hit',
+              'chart_type': 'decile',
+        },
+        {
+            'title': 'Test Data - pd_pg_sbfe_ln_only - Risk Grade',
+            'data': data_test_scored[(data_test_scored['booked']) & (data_test_scored['risk_grade_path'] == 'pg_and_1_plus_sbfe_tradeline_and_fico_no_hit') & (data_test_scored['pg_subsegment'] == 'pg_should_be_required')],
+            'score_column': 'pd_pg_sbfe_ln_only',
+            'target_column': 'is_bad',
+            'n_bins': 20,
+            'segment': 'pg_and_1_plus_sbfe_tradeline_and_fico_no_hit',
+            'chart_type': 'risk_grade',
+            'risk_grade_thresholds': new_pd_risk_grade_thresholds,
+            'risk_grade_column': 'risk_grades'
+            
+        },
+       {
+            'title': 'Test Data - pd_pg_sbfe_ln_only - Risk Grade',
+            'data': data_test_scored[(data_test_scored['booked']) & (data_test_scored['risk_grade_path'] == 'pg_and_1_plus_sbfe_tradeline_and_fico_no_hit') & (data_test_scored['pg_subsegment'] == 'pg_should_not_be_required')],
+            'score_column': 'pd_pg_sbfe_ln_only',
+            'target_column': 'is_bad',
+            'n_bins': 20,
+             'segment': 'pg_and_1_plus_sbfe_tradeline_and_fico_no_hit',
+             'chart_type': 'risk_grade',
+             'risk_grade_thresholds': new_pd_risk_grade_thresholds,
+             'risk_grade_column': 'risk_grades'
+        },
+           {
+            'title': 'Scoring Data - pd_pg_sbfe_ln_only - Risk Grade',
+            'data': data_scoring_scored[(data_scoring_scored['booked']) & (data_scoring_scored['risk_grade_path'] == 'pg_and_1_plus_sbfe_tradeline_and_fico_no_hit') & (data_scoring_scored['pg_subsegment'] == 'pg_should_be_required')],
+            'score_column': 'pd_pg_sbfe_ln_only',
+            'target_column': 'is_bad',
+            'n_bins': 20,
+             'segment': 'pg_and_1_plus_sbfe_tradeline_and_fico_no_hit',
+             'chart_type': 'risk_grade',
+             'risk_grade_thresholds': new_pd_risk_grade_thresholds,
+             'risk_grade_column': 'risk_grades'
+        },
+
+       # pd_pg_sba_ln_and_fico
+       {
+            'title': 'Test Data - pd_pg_sba_ln_and_fico - Decile',
+             'data': data_test_scored[(data_test_scored['booked']) & (data_test_scored['pg_subsegment'] == 'pg_should_be_required')],
+             'score_column': 'pd_pg_sba_ln_and_fico',
+             'target_column': 'is_bad',
+             'n_bins': 20,
+             'segment': 'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit',
+             'chart_type': 'decile',
+        },
+        {
+             'title': 'Test Data - pd_pg_sba_ln_and_fico - Decile',
+              'data': data_test_scored[(data_test_scored['booked']) & (data_test_scored['pg_subsegment'] == 'pg_should_not_be_required')],
+              'score_column': 'pd_pg_sba_ln_and_fico',
+              'target_column': 'is_bad',
+              'n_bins': 20,
+             'segment': 'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit',
+            'chart_type': 'decile',
+        },
+        {
+            'title': 'Scoring Data - pd_pg_sba_ln_and_fico - Decile',
+            'data': data_scoring_scored[(data_scoring_scored['booked']) & (data_scoring_scored['pg_subsegment'] == 'pg_should_be_required')],
+            'score_column': 'pd_pg_sba_ln_and_fico',
+            'target_column': 'is_bad',
+            'n_bins': 20,
+             'segment': 'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit',
+             'chart_type': 'decile',
+        },
+         {
+            'title': 'Test Data - pd_pg_sba_ln_and_fico - Risk Grade',
+            'data': data_test_scored[(data_test_scored['booked']) & (data_test_scored['risk_grade_path'] == 'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit') & (data_test_scored['pg_subsegment'] == 'pg_should_be_required')],
+            'score_column': 'pd_pg_sba_ln_and_fico',
+            'target_column': 'is_bad',
+            'n_bins': 20,
+             'segment': 'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit',
+             'chart_type': 'risk_grade',
+             'risk_grade_thresholds': new_pd_risk_grade_thresholds,
+             'risk_grade_column': 'risk_grades'
+            
+         },
+           {
+            'title': 'Test Data - pd_pg_sba_ln_and_fico - Risk Grade',
+            'data': data_test_scored[(data_test_scored['booked']) & (data_test_scored['risk_grade_path'] == 'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit') & (data_test_scored['pg_subsegment'] == 'pg_should_not_be_required')],
+            'score_column': 'pd_pg_sba_ln_and_fico',
+            'target_column': 'is_bad',
+            'n_bins': 20,
+             'segment': 'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit',
+             'chart_type': 'risk_grade',
+             'risk_grade_thresholds': new_pd_risk_grade_thresholds,
+             'risk_grade_column': 'risk_grades'
+            
+        },
+           {
+            'title': 'Scoring Data - pd_pg_sba_ln_and_fico - Risk Grade',
+            'data': data_scoring_scored[(data_scoring_scored['booked']) & (data_scoring_scored['risk_grade_path'] == 'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit') & (data_scoring_scored['pg_subsegment'] == 'pg_should_be_required')],
+             'score_column': 'pd_pg_sba_ln_and_fico',
+             'target_column': 'is_bad',
+             'n_bins': 20,
+            'segment': 'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit',
+            'chart_type': 'risk_grade',
+            'risk_grade_thresholds': new_pd_risk_grade_thresholds,
+            'risk_grade_column': 'risk_grades'
+           },
+        
+        # pd_pg_sba_ln_only
+           {
+             'title': 'Test Data - pd_pg_sba_ln_only - Decile',
+             'data': data_test_scored[(data_test_scored['booked']) & (data_test_scored['pg_subsegment'] == 'pg_should_be_required')],
+              'score_column': 'pd_pg_sba_ln_only',
+             'target_column': 'is_bad',
+            'n_bins': 20,
+             'segment': 'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit',
+             'chart_type': 'decile',
+        },
+        # {
+        #      'title': 'Test Data - pd_pg_sba_ln_only - Decile',
+        #     'data': data_test_scored[(data_test_scored['booked']) & (data_test_scored['pg_subsegment'] == 'pg_should_not_be_required')],
+        #     'score_column': 'pd_pg_sba_ln_only',
+        #     'target_column': 'is_bad',
+        #     'n_bins': 20,
+        #      'segment': 'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit',
+        #      'chart_type': 'decile',
+        # },
+         {
+            'title': 'Scoring Data - pd_pg_sba_ln_only - Decile',
+            'data': data_scoring_scored[(data_scoring_scored['booked']) & (data_scoring_scored['pg_subsegment'] == 'pg_should_be_required')],
+            'score_column': 'pd_pg_sba_ln_only',
+            'target_column': 'is_bad',
+             'n_bins': 20,
+             'segment': 'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit',
+            'chart_type': 'decile',
+           },
+          {
+            'title': 'Test Data - pd_pg_sba_ln_only - Risk Grade',
+            'data': data_test_scored[(data_test_scored['booked']) & (data_test_scored['risk_grade_path'] == 'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit') & (data_test_scored['pg_subsegment'] == 'pg_should_be_required')],
+            'score_column': 'pd_pg_sba_ln_only',
+            'target_column': 'is_bad',
+            'n_bins': 20,
+            'segment': 'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit',
+            'chart_type': 'risk_grade',
+            'risk_grade_thresholds': new_pd_risk_grade_thresholds,
+            'risk_grade_column': 'risk_grades'
+          },
+        #   {
+        #     'title': 'Test Data - pd_pg_sba_ln_only - Risk Grade',
+        #    'data': data_test_scored[(data_test_scored['booked']) & (data_test_scored['risk_grade_path'] == 'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit') & (data_test_scored['pg_subsegment'] == 'pg_should_not_be_required')],
+        #    'score_column': 'pd_pg_sba_ln_only',
+        #    'target_column': 'is_bad',
+        #    'n_bins': 20,
+        #     'segment': 'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit',
+        #     'chart_type': 'risk_grade',
+        #     'risk_grade_thresholds': new_pd_risk_grade_thresholds,
+        #    'risk_grade_column': 'risk_grades'
+        # },
+           {
+            'title': 'Scoring Data - pd_pg_sba_ln_only - Risk Grade',
+            'data': data_scoring_scored[(data_scoring_scored['booked']) & (data_scoring_scored['risk_grade_path'] == 'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit') & (data_scoring_scored['pg_subsegment'] == 'pg_should_be_required')],
+            'score_column': 'pd_pg_sba_ln_only',
+            'target_column': 'is_bad',
+            'n_bins': 20,
+            'segment': 'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit',
+            'chart_type': 'risk_grade',
+           'risk_grade_thresholds': new_pd_risk_grade_thresholds,
+           'risk_grade_column': 'risk_grades'
+         },
+
+
+      # pd_pg_fico_only
+       {
+            'title': 'Test Data - pd_pg_fico_only - Decile',
+            'data': data_test_scored[(data_test_scored['booked']) & (data_test_scored['pg_subsegment'] == 'pg_should_be_required')],
+            'score_column': 'pd_pg_fico_only',
+            'target_column': 'is_bad',
+            'n_bins': 20,
+           'segment': 'pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit',
+           'chart_type': 'decile',
+       },
+        {
+            'title': 'Test Data - pd_pg_fico_only - Decile',
+            'data': data_test_scored[(data_test_scored['booked']) & (data_test_scored['pg_subsegment'] == 'pg_should_not_be_required')],
+           'score_column': 'pd_pg_fico_only',
+           'target_column': 'is_bad',
+           'n_bins': 20,
+           'segment': 'pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit',
+            'chart_type': 'decile',
+       },
+        {
+            'title': 'Scoring Data - pd_pg_fico_only - Decile',
+             'data': data_scoring_scored[(data_scoring_scored['booked']) & (data_scoring_scored['pg_subsegment'] == 'pg_should_be_required')],
+             'score_column': 'pd_pg_fico_only',
+            'target_column': 'is_bad',
+           'n_bins': 20,
+            'segment': 'pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit',
+             'chart_type': 'decile',
+        },
+        {
+           'title': 'Scoring Data - pd_pg_fico_only - Decile',
+           'data': data_scoring_scored[(data_scoring_scored['booked']) & (data_scoring_scored['pg_subsegment'] == 'pg_should_not_be_required')],
+            'score_column': 'pd_pg_fico_only',
+            'target_column': 'is_bad',
+           'n_bins': 20,
+           'segment': 'pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit',
+            'chart_type': 'decile',
+       },
+      {
+            'title': 'Test Data - pd_pg_fico_only - Risk Grade',
+            'data': data_test_scored[(data_test_scored['booked']) & (data_test_scored['risk_grade_path'] == 'pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit') & (data_test_scored['pg_subsegment'] == 'pg_should_be_required')],
+            'score_column': 'pd_pg_fico_only',
+            'target_column': 'is_bad',
+            'n_bins': 20,
+             'segment': 'pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit',
+             'chart_type': 'risk_grade',
+             'risk_grade_thresholds': new_pd_risk_grade_thresholds,
+             'risk_grade_column': 'risk_grades'
+        },
+         {
+            'title': 'Test Data - pd_pg_fico_only - Risk Grade',
+            'data': data_test_scored[(data_test_scored['booked']) & (data_test_scored['risk_grade_path'] == 'pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit') & (data_test_scored['pg_subsegment'] == 'pg_should_not_be_required')],
+            'score_column': 'pd_pg_fico_only',
+            'target_column': 'is_bad',
+            'n_bins': 20,
+            'segment': 'pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit',
+            'chart_type': 'risk_grade',
+           'risk_grade_thresholds': new_pd_risk_grade_thresholds,
+           'risk_grade_column': 'risk_grades'
+       },
+          {
+            'title': 'Scoring Data - pd_pg_fico_only - Risk Grade',
+            'data': data_scoring_scored[(data_scoring_scored['booked']) & (data_scoring_scored['risk_grade_path'] == 'pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit') & (data_scoring_scored['pg_subsegment'] == 'pg_should_be_required')],
+            'score_column': 'pd_pg_fico_only',
+            'target_column': 'is_bad',
+            'n_bins': 20,
+             'segment': 'pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit',
+            'chart_type': 'risk_grade',
+           'risk_grade_thresholds': new_pd_risk_grade_thresholds,
+            'risk_grade_column': 'risk_grades'
+       },
+    #     {
+    #        'title': 'Scoring Data - pd_pg_fico_only - Risk Grade',
+    #        'data': data_scoring_scored[(data_scoring_scored['booked']) & (data_scoring_scored['risk_grade_path'] == 'pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit') & (data_scoring_scored['pg_subsegment'] == 'pg_should_not_be_required')],
+    #        'score_column': 'pd_pg_fico_only',
+    #        'target_column': 'is_bad',
+    #        'n_bins': 20,
+    #         'segment': 'pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit',
+    #         'chart_type': 'risk_grade',
+    #         'risk_grade_thresholds': new_pd_risk_grade_thresholds,
+    #         'risk_grade_column': 'risk_grades'
+    #    },
+    ]
+
+    for params in chart_params:
+          generate_lift_chart(**params)
+
+
+
+
+def analyze_booked_rates_for_segments(data_dev_scored):
+    """Analyzes booked rates for different segments based on FICO and LN score bands."""
+    
+    print("Analyzing booked rates for segment: pg_and_1_plus_sbfe_tradeline_and_fico_hit")
+    data = data_dev_scored.copy()
+    data = data[(data['risk_grade_path'] == 'pg_and_1_plus_sbfe_tradeline_and_fico_hit')]
+
+    # Define fico score bands and ln_score ranges
+    fico_bands = [580, 600, 620, 640, 660, 680, 700, 720, 740, 760, 780, 800, 820, 840]
+    fico_ranges = list(zip(fico_bands[:-1], fico_bands[1:]))
+    fico_ranges.append((fico_bands[-1], 900))
+    ln_bands = [500, 550, 600, 650, 700, 750, 800, 850, 900]
+    ln_ranges = list(zip(ln_bands[:-1], ln_bands[1:]))
+    ln_ranges.append((ln_bands[-1], 900))
+
+    # Create an empty matrix to store results
+    results_matrix = pd.DataFrame(index=fico_ranges, columns=ln_ranges)  # Use ln_ranges directly for columns
+    results_matrix = results_matrix.fillna('')
+    total_test = 0
+    # Iterate through fico bands and ln_score ranges
+    for i in range(len(fico_ranges)):
+        for j in range(len(ln_ranges)):  # Iterate through all ln_ranges
+            fico_lower = fico_ranges[i][0]
+            fico_upper = fico_ranges[i][1]
+            ln_lower = ln_ranges[j][0]
+            ln_upper = ln_ranges[j][1]
+
+            filtered_df = data[
+                (data['fico_score'] >= fico_lower) &
+                (data['fico_score'] < fico_upper) &
+                (data['ln_score'] >= ln_lower) &
+                (data['ln_score'] < ln_upper)
+            ]
+
+            total_rows = len(filtered_df)
+            if total_rows > 0:
+                total_test += total_rows
+                booked_rows = filtered_df['booked'].sum()
+                booked_rate = (booked_rows / total_rows) * 100
+                results_matrix.iloc[i, j] = f"{total_rows} ({booked_rate:.1f}%)"
+            else:
+                results_matrix.iloc[i, j] = "0 (0.0%)"
+
+    # Display the results matrix
+    print(total_test)
+    print(results_matrix)
+
+
+    print("Analyzing booked rates for segment: pg_and_1_plus_sbfe_tradeline_and_fico_no_hit")
+    data = data_dev_scored.copy()
+    data = data[(data['risk_grade_path'] == 'pg_and_1_plus_sbfe_tradeline_and_fico_no_hit')]
+
+    # Define fico score bands and ln_score ranges
+    ln_bands = [500, 550, 600, 650, 700, 750, 800, 850, 900]
+    ln_ranges = list(zip(ln_bands[:-1], ln_bands[1:]))
+    ln_ranges.append((ln_bands[-1], 900))
+
+    # Create an empty matrix to store results
+    results_matrix = pd.DataFrame(index=ln_ranges)
+    results_matrix['counts'] = ''
+    results_matrix = results_matrix.fillna('')
+
+    # Iterate through fico bands and ln_score ranges
+    for i in range(len(ln_ranges)):
+        ln_lower = ln_ranges[i][0]
+        ln_upper = ln_ranges[i][1]
+
+        filtered_df = data[
+            (data['ln_score'] >= ln_lower) &
+            (data['ln_score'] < ln_upper)
+        ]
+
+        total_rows = len(filtered_df)
+        if total_rows > 0:
+            booked_rows = filtered_df['booked'].sum()
+            booked_rate = (booked_rows / total_rows) * 100
+            results_matrix['counts'].iloc[i] = f"{total_rows} ({booked_rate:.1f}%)"
+        else:
+            results_matrix['counts'].iloc[i] = "0 (0.0%)"
+
+    # Display the results matrix
+    print(results_matrix)
+
+
+    print("Analyzing booked rates for segment: pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit")
+    data = data_dev_scored.copy()
+    data = data[(data['risk_grade_path'] == 'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit')]
+
+
+    # Define fico score bands and ln_score ranges
+    fico_bands = [580, 600, 620, 640, 660, 680, 700, 720, 740, 760, 780, 800, 820, 840]
+    fico_ranges = list(zip(fico_bands[:-1], fico_bands[1:]))
+    fico_ranges.append((fico_bands[-1], 900))
+    ln_bands = [500, 550, 600, 650, 700, 750, 800, 850, 900]
+    ln_ranges = list(zip(ln_bands[:-1], ln_bands[1:]))
+    ln_ranges.append((ln_bands[-1], 900))
+
+    # Create an empty matrix to store results
+    results_matrix = pd.DataFrame(index=fico_ranges, columns=ln_ranges)  # Use ln_ranges directly for columns
+    results_matrix = results_matrix.fillna('')
+
+    # Iterate through fico bands and ln_score ranges
+    for i in range(len(fico_ranges)):
+        for j in range(len(ln_ranges)):  # Iterate through all ln_ranges
+            fico_lower = fico_ranges[i][0]
+            fico_upper = fico_ranges[i][1]
+            ln_lower = ln_ranges[j][0]
+            ln_upper = ln_ranges[j][1]
+
+            filtered_df = data[
+                (data['fico_score'] >= fico_lower) &
+                (data['fico_score'] < fico_upper) &
+                (data['ln_score'] >= ln_lower) &
+                (data['ln_score'] < ln_upper)
+            ]
+
+            total_rows = len(filtered_df)
+            if total_rows > 0:
+                booked_rows = filtered_df['booked'].sum()
+                booked_rate = (booked_rows / total_rows) * 100
+                results_matrix.iloc[i, j] = f"{total_rows} ({booked_rate:.1f}%)"
+            else:
+                results_matrix.iloc[i, j] = "0 (0.0%)"
+
+    # Display the results matrix
+    print(results_matrix)
+
+
+    print("Analyzing booked rates for segment: pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit")
+    data = data_dev_scored.copy()
+    data = data[(data['risk_grade_path'] == 'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit')]
+
+
+    # Define fico score bands and ln_score ranges
+    ln_bands = [500, 550, 600, 650, 700, 750, 800, 850, 900]
+    ln_ranges = list(zip(ln_bands[:-1], ln_bands[1:]))
+    ln_ranges.append((ln_bands[-1], 900))
+
+
+    # Create an empty matrix to store results
+    results_matrix = pd.DataFrame(index=ln_ranges)
+    results_matrix['counts'] = ''
+    results_matrix = results_matrix.fillna('')
+
+    # Iterate through fico bands and ln_score ranges
+    for i in range(len(ln_ranges)):
+        ln_lower = ln_ranges[i][0]
+        ln_upper = ln_ranges[i][1]
+
+        filtered_df = data[
+            (data['ln_score'] >= ln_lower) &
+            (data['ln_score'] < ln_upper)
+        ]
+
+        total_rows = len(filtered_df)
+        if total_rows > 0:
+            booked_rows = filtered_df['booked'].sum()
+            booked_rate = (booked_rows / total_rows) * 100
+            results_matrix['counts'].iloc[i] = f"{total_rows} ({booked_rate:.1f}%)"
+        else:
+            results_matrix['counts'].iloc[i] = "0 (0.0%)"
+
+    # Display the results matrix
+    print(results_matrix)
+
+
+    print("Analyzing booked rates for segment: pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit")
+    data = data_dev_scored.copy()
+    data = data[(data['risk_grade_path'] == 'pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit')]
+
+
+    # Define fico score bands and ln_score ranges
+    fico_bands = [580, 600, 620, 640, 660, 680, 700, 720, 740, 760, 780, 800, 820, 840]
+    fico_ranges = list(zip(fico_bands[:-1], fico_bands[1:]))
+    fico_ranges.append((fico_bands[-1], 900))
+
+
+    # Create an empty matrix to store results
+    results_matrix = pd.DataFrame(index=fico_ranges)
+    results_matrix['counts'] = ''
+    results_matrix = results_matrix.fillna('')
+
+    # Iterate through fico bands and ln_score ranges
+    for i in range(len(fico_ranges)):
+        fico_lower = fico_ranges[i][0]
+        fico_upper = fico_ranges[i][1]
+
+        filtered_df = data[
+            (data['fico_score'] >= fico_lower) &
+            (data['fico_score'] < fico_upper)
+        ]
+
+        total_rows = len(filtered_df)
+        if total_rows > 0:
+            booked_rows = filtered_df['booked'].sum()
+            booked_rate = (booked_rows / total_rows) * 100
+            results_matrix['counts'].iloc[i] = f"{total_rows} ({booked_rate:.1f}%)"
+        else:
+            results_matrix['counts'].iloc[i] = "0 (0.0%)"
+
+    # Display the results matrix
+    print(results_matrix)
+    
+
+    print("Analyzing booked rates for segment: no_pg_and_1_plus_sbfe_tradeline")
+    data = data_dev_scored.copy()
+    data = data[(data['risk_grade_path'] == 'no_pg_and_1_plus_sbfe_tradeline')]
+
+    # Define fico score bands and ln_score ranges
+    ln_bands = [500, 550, 600, 650, 700, 750, 800, 850, 900]
+    ln_ranges = list(zip(ln_bands[:-1], ln_bands[1:]))
+    ln_ranges.append((ln_bands[-1], 900))
+
+    # Create an empty matrix to store results
+    results_matrix = pd.DataFrame(index=ln_ranges)
+    results_matrix['counts'] = ''
+    results_matrix = results_matrix.fillna('')
+
+    # Iterate through fico bands and ln_score ranges
+    for i in range(len(ln_ranges)):
+        ln_lower = ln_ranges[i][0]
+        ln_upper = ln_ranges[i][1]
+
+        filtered_df = data[
+            (data['ln_score'] >= ln_lower) &
+            (data['ln_score'] < ln_upper)
+        ]
+
+        total_rows = len(filtered_df)
+        if total_rows > 0:
+            booked_rows = filtered_df['booked'].sum()
+            booked_rate = (booked_rows / total_rows) * 100
+            results_matrix['counts'].iloc[i] = f"{total_rows} ({booked_rate:.1f}%)"
+        else:
+            results_matrix['counts'].iloc[i] = "0 (0.0%)"
+
+    # Display the results matrix
+    print(results_matrix)
+
+
+    print("Analyzing booked rates for segment: no_pg_and_no_1_plus_sbfe_tradeline_and_1_plus_sba_tradeline")
+    data = data_dev_scored.copy()
+    data = data[(data['risk_grade_path'] == 'no_pg_and_no_1_plus_sbfe_tradeline_and_1_plus_sba_tradeline')]
+
+    # Define fico score bands and ln_score ranges
+    ln_bands = [500, 550, 600, 650, 700, 750, 800, 850, 900]
+    ln_ranges = list(zip(ln_bands[:-1], ln_bands[1:]))
+    ln_ranges.append((ln_bands[-1], 900))
+
+
+    # Create an empty matrix to store results
+    results_matrix = pd.DataFrame(index=ln_ranges)
+    results_matrix['counts'] = ''
+    results_matrix = results_matrix.fillna('')
+
+    # Iterate through fico bands and ln_score ranges
+    for i in range(len(ln_ranges)):
+        ln_lower = ln_ranges[i][0]
+        ln_upper = ln_ranges[i][1]
+
+        filtered_df = data[
+            (data['ln_score'] >= ln_lower) &
+            (data['ln_score'] < ln_upper)
+        ]
+
+        total_rows = len(filtered_df)
+        if total_rows > 0:
+            booked_rows = filtered_df['booked'].sum()
+            booked_rate = (booked_rows / total_rows) * 100
+            results_matrix['counts'].iloc[i] = f"{total_rows} ({booked_rate:.1f}%)"
+        else:
+            results_matrix['counts'].iloc[i] = "0 (0.0%)"
+
+    # Display the results matrix
+    print(results_matrix)
