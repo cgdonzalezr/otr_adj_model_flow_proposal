@@ -1079,3 +1079,147 @@ Given the findings, we have two primary options:
 2. **Re-evaluate EM Algorithm Implementation:** The persistent overestimation of PD with the EM algorithm suggests potential errors in its implementation or underlying assumptions. A thorough review of the algorithm's implementation is warranted to identify and rectify any potential issues.
 
 Further investigation and monitoring of model performance are crucial as more data becomes available.  This will allow us to refine the chosen approach and ensure the long-term accuracy and stability of the PD estimations.
+
+## 01/07/2024 11:02 am
+### Impact of Cutoff on EM Algorithm for Reject Inference
+
+This section explores the influence of the cutoff value on the application of the Expectation-Maximization (EM) algorithm for reject inference in credit risk modeling. As discussed in the paper [Modified logistic regression using the EM-algorithm for reject inference](https://www.crc.business-school.ed.ac.uk/sites/crc/files/2023-10/Modified-logistic-regression-using-the-EM-algorithm-for-reject-inference.pdf), the EM algorithm can significantly shift the model's behavior. 
+
+#### Background
+
+The EM algorithm, when applied to reject inference, iteratively updates model parameters based on observed outcomes and estimated probabilities for rejected applications. This can lead to a situation where the model becomes overly conservative, declining most applications.
+
+The initial approach for setting the cutoff for classifying rejected applicants as "good" or "bad" uses the default rate of the accepted population:
+
+`bad_rate_accepts = yf_numeric.mean()`
+
+This is based on the typical practice where the bad rate of rejected applicants is 2-4 times higher than accepted ones. In this case, a `bad_rate_accepts` of 0.02 was calculated from the dataset.
+
+The original model without reject inference produces the following Probability of Default (PD) estimates based on FICO bands:
+
+**Original Model PD Estimates**
+
+| FICO Band | 500    | 550    | 600    | 650    | 700    | 750    | 800    | 850    | 900    |
+|-----------|--------|--------|--------|--------|--------|--------|--------|--------|--------|
+| 600       | 57.06% | 38.63% | 22.97% | 12.37% | 6.27%  | 3.07%  | 1.48%  | 0.71%  | 0.34%  |
+| 620       | 49.49% | 31.70% | 18.02% | 9.43%  | 4.70%  | 2.28%  | 1.09%  | 0.52%  | 0.25%  |
+| 640       | 41.95% | 25.50% | 13.95% | 7.13%  | 3.51%  | 1.69%  | 0.81%  | 0.39%  | 0.18%  |
+| 660       | 34.76% | 20.15% | 10.68% | 5.36%  | 2.61%  | 1.25%  | 0.60%  | 0.28%  | 0.13%  |
+| 680       | 28.21% | 15.69% | 8.10%  | 4.01%  | 1.94%  | 0.93%  | 0.44%  | 0.21%  | 0.10%  |
+| 700       | 22.47% | 12.07% | 6.11%  | 2.99%  | 1.44%  | 0.69%  | 0.33%  | 0.15%  | 0.07%  |
+| 720       | 17.61% | 9.19%  | 4.58%  | 2.22%  | 1.06%  | 0.51%  | 0.24%  | 0.11%  | 0.05%  |
+| 740       | 13.61% | 6.95%  | 3.42%  | 1.65%  | 0.79%  | 0.37%  | 0.18%  | 0.08%  | 0.04%  |
+| 760       | 10.41% | 5.22%  | 2.54%  | 1.22%  | 0.58%  | 0.28%  | 0.13%  | 0.06%  | 0.03%  |
+| 780       | 7.89%  | 3.90%  | 1.89%  | 0.90%  | 0.43%  | 0.20%  | 0.10%  | 0.05%  | 0.02%  |
+| 800       | 5.94%  | 2.91%  | 1.40%  | 0.67%  | 0.32%  | 0.15%  | 0.07%  | 0.03%  | 0.02%  |
+| 820       | 4.45%  | 2.16%  | 1.04%  | 0.49%  | 0.23%  | 0.11%  | 0.05%  | 0.02%  | 0.01%  |
+| 840       | 3.32%  | 1.60%  | 0.77%  | 0.36%  | 0.17%  | 0.08%  | 0.04%  | 0.02%  | 0.01%  |
+| 850       | 2.87%  | 1.38%  | 0.66%  | 0.31%  | 0.15%  | 0.07%  | 0.03%  | 0.02%  | 0.01%  |
+
+Applying reject inference with a cutoff of 0.02, dramatically changes the model predictions, leading to higher PDs:
+
+**PD Estimates with EM Algorithm (Cutoff = 0.02, bad_rate_accepts)**
+
+| FICO Band | 500    | 550    | 600    | 650    | 700    | 750    | 800    | 850    | 900    |
+|-----------|--------|--------|--------|--------|--------|--------|--------|--------|--------|
+| 600       | 62.85% | 61.35% | 59.83% | 58.29% | 56.73% | 55.16% | 53.58% | 52.00% | 50.40% |
+| 620       | 54.87% | 53.29% | 51.70% | 50.11% | 48.52% | 46.93% | 45.34% | 43.77% | 42.21% |
+| 640       | 46.63% | 45.05% | 43.48% | 41.92% | 40.38% | 38.85% | 37.35% | 35.87% | 34.42% |
+| 660       | 38.57% | 37.08% | 35.60% | 34.16% | 32.74% | 31.35% | 30.00% | 28.67% | 27.39% |
+| 680       | 31.10% | 29.75% | 28.43% | 27.16% | 25.91% | 24.71% | 23.54% | 22.42% | 21.33% |
+| 700       | 24.49% | 23.33% | 22.21% | 21.13% | 20.09% | 19.08% | 18.12% | 17.19% | 16.31% |
+| 720       | 18.90% | 17.95% | 17.03% | 16.15% | 15.30% | 14.49% | 13.72% | 12.98% | 12.28% |
+| 740       | 14.35% | 13.58% | 12.85% | 12.16% | 11.49% | 10.86% | 10.26% | 9.69%  | 9.14%  |
+| 760       | 10.75% | 10.15% | 9.58%  | 9.05%  | 8.53%  | 8.05%  | 7.59%  | 7.16%  | 6.74%  |
+| 780       | 7.96%  | 7.51%  | 7.08%  | 6.67%  | 6.28%  | 5.92%  | 5.57%  | 5.25%  | 4.94%  |
+| 800       | 5.85%  | 5.51%  | 5.19%  | 4.89%  | 4.60%  | 4.33%  | 4.07%  | 3.83%  | 3.60%  |
+| 820       | 4.28%  | 4.02%  | 3.79%  | 3.56%  | 3.35%  | 3.15%  | 2.96%  | 2.78%  | 2.61%  |
+| 840       | 3.11%  | 2.93%  | 2.75%  | 2.58%  | 2.43%  | 2.28%  | 2.14%  | 2.01%  | 1.89%  |
+| 850       | 2.65%  | 2.49%  | 2.34%  | 2.20%  | 2.07%  | 1.94%  | 1.82%  | 1.71%  | 1.61%  |
+
+#### Impact of Different Cutoff Values
+
+Because the rejected applicants should have a higher default rate, we manually tested other cutoff values: 0.05, 0.1, and 0.5.
+
+##### Cutoff = 0.05
+
+| FICO Band | 500     | 550     | 600     | 650     | 700     | 750     | 800     | 850     | 900     |
+|-----------|---------|---------|---------|---------|---------|---------|---------|---------|---------|
+| 600       | 92.81%  | 90.68%  | 88.00%  | 84.68%  | 80.64%  | 75.84%  | 70.29%  | 64.07%  | 57.34%  |
+| 620       | 82.81%  | 78.41%  | 73.24%  | 67.35%  | 60.86%  | 53.96%  | 46.90%  | 39.97%  | 33.41%  |
+| 640       | 64.28%  | 57.56%  | 50.55%  | 43.51%  | 36.73%  | 30.44%  | 24.80%  | 19.91%  | 15.78%  |
+| 660       | 40.18%  | 33.61%  | 27.62%  | 22.34%  | 17.82%  | 14.05%  | 10.97%  | 8.49%   | 6.54%   |
+| 680       | 20.05%  | 15.90%  | 12.47%  | 9.70%   | 7.49%   | 5.75%   | 4.40%   | 3.35%   | 2.55%   |
+| 700       | 8.56%   | 6.59%   | 5.05%   | 3.86%   | 2.93%   | 2.23%   | 1.69%   | 1.28%   | 0.97%   |
+| 720       | 3.38%   | 2.57%   | 1.95%   | 1.48%   | 1.12%   | 0.84%   | 0.64%   | 0.48%   | 0.36%   |
+| 740       | 1.29%   | 0.97%   | 0.74%   | 0.56%   | 0.42%   | 0.32%   | 0.24%   | 0.18%   | 0.14%   |
+| 760       | 0.49%   | 0.37%   | 0.28%   | 0.21%   | 0.16%   | 0.12%   | 0.09%   | 0.07%   | 0.05%   |
+| 780       | 0.18%   | 0.14%   | 0.10%   | 0.08%   | 0.06%   | 0.04%   | 0.03%   | 0.03%   | 0.02%   |
+| 800       | 0.07%   | 0.05%   | 0.04%   | 0.03%   | 0.02%   | 0.02%   | 0.01%   | 0.01%   | 0.01%   |
+| 820       | 0.03%   | 0.02%   | 0.01%   | 0.01%   | 0.01%   | 0.01%   | 0.00%   | 0.00%   | 0.00%   |
+| 840       | 0.01%   | 0.01%   | 0.01%   | 0.00%   | 0.00%   | 0.00%   | 0.00%   | 0.00%   | 0.00%   |
+| 850       | 0.01%   | 0.00%   | 0.00%   | 0.00%   | 0.00%   | 0.00%   | 0.00%   | 0.00%   | 0.00%   |
+
+##### Cutoff = 0.1
+
+| FICO Band | 500     | 550     | 600     | 650     | 700     | 750     | 800     | 850     | 900     |
+|-----------|---------|---------|---------|---------|---------|---------|---------|---------|---------|
+| 600       | 94.14%  | 92.14%  | 89.53%  | 86.20%  | 82.01%  | 76.90%  | 70.84%  | 63.95%  | 56.42%  |
+| 620       | 84.09%  | 79.42%  | 73.80%  | 67.28%  | 60.02%  | 52.28%  | 44.44%  | 36.87%  | 29.89%  |
+| 640       | 63.51%  | 55.95%  | 48.12%  | 40.37%  | 33.07%  | 26.51%  | 20.85%  | 16.13%  | 12.31%  |
+| 660       | 36.42%  | 29.49%  | 23.39%  | 18.23%  | 13.99%  | 10.62%  | 7.98%   | 5.95%   | 4.42%   |
+| 680       | 15.87%  | 12.10%  | 9.13%   | 6.84%   | 5.08%   | 3.76%   | 2.78%   | 2.04%   | 1.50%   |
+| 700       | 5.85%   | 4.34%   | 3.20%   | 2.36%   | 1.73%   | 1.27%   | 0.93%   | 0.68%   | 0.50%   |
+| 720       | 2.00%   | 1.47%   | 1.08%   | 0.79%   | 0.58%   | 0.42%   | 0.31%   | 0.23%   | 0.16%   |
+| 740       | 0.67%   | 0.49%   | 0.36%   | 0.26%   | 0.19%   | 0.14%   | 0.10%   | 0.07%   | 0.05%   |
+| 760       | 0.22%   | 0.16%   | 0.12%   | 0.09%   | 0.06%   | 0.05%   | 0.03%   | 0.02%   | 0.02%   |
+| 780       | 0.07%   | 0.05%   | 0.04%   | 0.03%   | 0.02%   | 0.02%   | 0.01%   | 0.01%   | 0.01%   |
+| 800       | 0.02%   | 0.02%   | 0.01%   | 0.01%   | 0.01%   | 0.00%   | 0.00%   | 0.00%   | 0.00%   |
+| 820       | 0.01%   | 0.01%   | 0.00%   | 0.00%   | 0.00%   | 0.00%   | 0.00%   | 0.00%   | 0.00%   |
+| 840       | 0.00%   | 0.00%   | 0.00%   | 0.00%   | 0.00%   | 0.00%   | 0.00%   | 0.00%   | 0.00%   |
+| 850       | 0.00%   | 0.00%   | 0.00%   | 0.00%   | 0.00%   | 0.00%   | 0.00%   | 0.00%   | 0.00%   |
+
+##### Cutoff = 0.5
+
+| FICO Band | 500    | 550    | 600    | 650    | 700    | 750    | 800    | 850    | 900    |
+|-----------|--------|--------|--------|--------|--------|--------|--------|--------|--------|
+| 600       | 15.72% | 9.08%  | 5.07%  | 2.78%  | 1.51%  | 0.81%  | 0.44%  | 0.23%  | 0.13%  |
+| 620       | 14.98% | 8.62%  | 4.81%  | 2.63%  | 1.43%  | 0.77%  | 0.41%  | 0.22%  | 0.12%  |
+| 640       | 14.28% | 8.19%  | 4.56%  | 2.49%  | 1.35%  | 0.73%  | 0.39%  | 0.21%  | 0.11%  |
+| 660       | 13.60% | 7.77%  | 4.32%  | 2.36%  | 1.28%  | 0.69%  | 0.37%  | 0.20%  | 0.11%  |
+| 680       | 12.95% | 7.38%  | 4.09%  | 2.23%  | 1.21%  | 0.65%  | 0.35%  | 0.19%  | 0.10%  |
+| 700       | 12.32% | 7.00%  | 3.87%  | 2.11%  | 1.14%  | 0.61%  | 0.33%  | 0.18%  | 0.09%  |
+| 720       | 11.73% | 6.64%  | 3.67%  | 2.00%  | 1.08%  | 0.58%  | 0.31%  | 0.17%  | 0.09%  |
+| 740       | 11.15% | 6.30%  | 3.47%  | 1.89%  | 1.02%  | 0.55%  | 0.29%  | 0.16%  | 0.08%  |
+| 760       | 10.61% | 5.97%  | 3.29%  | 1.79%  | 0.97%  | 0.52%  | 0.28%  | 0.15%  | 0.08%  |
+| 780       | 10.08% | 5.66%  | 3.11%  | 1.69%  | 0.91%  | 0.49%  | 0.26%  | 0.14%  | 0.08%  |
+| 800       | 9.58%  | 5.37%  | 2.95%  | 1.60%  | 0.86%  | 0.46%  | 0.25%  | 0.13%  | 0.07%  |
+| 820       | 9.10%  | 5.09%  | 2.79%  | 1.51%  | 0.82%  | 0.44%  | 0.24%  | 0.13%  | 0.07%  |
+| 840       | 8.64%  | 4.82%  | 2.64%  | 1.43%  | 0.77%  | 0.41%  | 0.22%  | 0.12%  | 0.06%  |
+| 850       | 8.42%  | 4.69%  | 2.57%  | 1.39%  | 0.75%  | 0.40%  | 0.22%  | 0.12%  | 0.06%  |
+
+#### Analysis
+
+The cutoff value significantly influences model parameters and estimated PDs.
+
+- **Low Cutoff (e.g., 0.02, 0.05):**  These values lead to the model labeling most rejected applicants as "bad", drastically increasing the estimated bads in the rejected population. This pushes the model to be overly conservative and favors rejection by increasing the power of the bad population.
+   - **Effect:** Increases PD estimates, reduces booking rates, and can lead to an over-conservative model.
+
+- **High Cutoff (e.g., 0.5):** This value labels most rejected applicants as "good," significantly increasing the estimated "goods" in the population.
+   - **Effect:** Decreases PD estimates, leading to a less conservative model.
+
+- **Cutoff of 0.05**: It shows some stability in the assignment of Estimated goods and bads for the rejected population, but it also drives the model to be much more likely to approve aplications, so it becomes more liberal.
+
+#### Conclusion
+
+The choice of cutoff value is critical when applying the EM algorithm for reject inference. Using the default rate of the accepted population may not be the optimal approach.  
+
+**Key Takeaways:**
+
+* A very low cutoff (e.g., 0.02, 0.05) can lead to a too conservative model by introducing too many "bads" to the rejected population.
+* A high cutoff (e.g., 0.5) can lead to an over-liberal model by introducing too many "goods" to the rejected population.
+* A proper cutoff should come from a technical and mathematical approach that can correctly represent the population.
+* Further research is needed to identify the optimal cutoff value that balances model accuracy, risk management, and business objectives.
+* Consider alternative approaches such as using a cutoff based on the default rate of the riskier segment of accepted applicants.
+
+This exploration highlights the sensitivity of the EM algorithm to cutoff values and underscores the need for careful consideration when implementing reject inference.
