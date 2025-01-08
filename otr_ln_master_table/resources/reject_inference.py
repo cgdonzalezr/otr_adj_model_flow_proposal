@@ -177,7 +177,7 @@ def em_algorithm(xf, xnf, yf, max_iterations=100, convergence_threshold=1e-5):
 
     # Calculate the bad rate of the accepts
     # bad_rate_accepts = yf_numeric.mean()
-    bad_rate_accepts = 0.05
+    bad_rate_accepts = 0.03
 
     # 1. Initialization: Train a model with the accepts only
     print("Initialization: Training model on accepts only...")
@@ -230,5 +230,6 @@ def em_algorithm(xf, xnf, yf, max_iterations=100, convergence_threshold=1e-5):
         'acceptance_model': None,
         'infered_model': current_model
     }
+
 
 
