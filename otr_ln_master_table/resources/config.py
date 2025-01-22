@@ -247,3 +247,225 @@ EDGE_PROGRAM_NAMES = [
     "FleetOne Edge Guaranteed Line",
     "Z Fleet One EDGE PLUS",
 ]
+
+
+
+CONDITIONS_NEW_MODEL = [
+    (lambda df: (df['pg_required_c'] == True) & (df['sbfeaccountcount_ln'] >= 1) & (df['sbfehitindex_ln'] >= 2) & (df['fico_score'].notnull())),
+    (lambda df: (df['pg_required_c'] == True) & (df['sbfeaccountcount_ln'] >= 1) & (df['sbfehitindex_ln'] >= 2) & (df['fico_score'].isnull())),
+    (lambda df: (df['pg_required_c'] == True) & (df['b2bcnt2y_ln'] >= 1) & (df['sbfehitindex_ln'] == 1) & (df['fico_score'].notnull())),
+    (lambda df: (df['pg_required_c'] == True) & (df['b2bcnt2y_ln'] >= 1) & (df['sbfehitindex_ln'] == 1) & (df['fico_score'].isnull())),
+    (lambda df: (df['pg_required_c'] == True) & ((df['sbfeaccountcount_ln'] < 1) | (df['sbfeaccountcount_ln'].isnull())) & ((df['b2bcnt2y_ln'] < 1) | (df['b2bcnt2y_ln'].isnull())) & ((df['sbfehitindex_ln'] <= 1) | (df['sbfehitindex_ln'].isnull())) & (df['fico_score'].notnull())),
+    (lambda df: (df['pg_required_c'] == True) & ((df['sbfeaccountcount_ln'] < 1) | (df['sbfeaccountcount_ln'].isnull())) & ((df['b2bcnt2y_ln'] < 1) | (df['b2bcnt2y_ln'].isnull())) & ((df['sbfehitindex_ln'] <= 1) | (df['sbfehitindex_ln'].isnull())) & (df['fico_score'].isnull())),
+    (lambda df: (df['pg_required_c'] == False) & (df['sbfeaccountcount_ln'] >= 1) & (df['sbfehitindex_ln'] >= 2)),
+    (lambda df: (df['pg_required_c'] == False) & (df['b2bcnt2y_ln'] >= 1) & (df['sbfehitindex_ln'] == 1)),
+    (lambda df: (df['pg_required_c'] == False) & ((df['sbfeaccountcount_ln'] < 1) | (df['sbfeaccountcount_ln'].isnull())) & ((df['b2bcnt2y_ln'] < 1) | (df['b2bcnt2y_ln'].isnull())) & ((df['sbfehitindex_ln'] < 1) | (df['sbfehitindex_ln'].isnull()))),
+#     (lambda df: (df['pg_required_c'] == True) & ((df['b2bcnt2y_ln'] < 1) | (df['b2bcnt2y_ln'].isnull())) & (df['sbfehitindex_ln'] == 1) & (df['fico_score'].notnull())), # merged with segment 5
+#     (lambda df: (df['pg_required_c'] == True) & ((df['b2bcnt2y_ln'] < 1) | (df['b2bcnt2y_ln'].isnull())) & (df['sbfehitindex_ln'] == 1) & (df['fico_score'].isnull())), # merged with segment 6, no hits
+    (lambda df: (df['pg_required_c'] == False) & ((df['b2bcnt2y_ln'] < 1) | (df['b2bcnt2y_ln'].isnull())) & (df['sbfehitindex_ln'] == 1) & (df['fico_score'].notnull())),
+    (lambda df: (df['pg_required_c'] == False) & ((df['b2bcnt2y_ln'] < 1) | (df['b2bcnt2y_ln'].isnull())) & (df['sbfehitindex_ln'] == 1) & (df['fico_score'].isnull()))
+]
+
+CHOICES_NEW_MODEL = [
+    'pg_and_1_plus_sbfe_tradeline_and_fico_hit',
+    'pg_and_1_plus_sbfe_tradeline_and_fico_no_hit',
+    'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit',
+    'pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit',
+    'pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit', 
+    'pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_no_hit', 
+    'no_pg_and_1_plus_sbfe_tradeline',
+    'no_pg_and_no_1_plus_sbfe_tradeline_and_1_plus_sba_tradeline',
+    'no_pg_no_sbfe_no_sba_no_fico',
+#     'pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_hit', ## contradiction between hitindex and b2bcnt
+#     'pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_no_hit', ## contradiction between hitindex and b2bcnt
+    'no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_hit', ## contradiction between hitindex and b2bcnt, how can have fico
+    'no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_no_hit' ## contradiction between hitindex and b2bcnt
+]
+
+
+CONDITION_PG_SBFE_FICO = {
+    "column": "risk_grade_path",
+    "allowed_values": ["pg_and_1_plus_sbfe_tradeline_and_fico_hit"],
+}
+CONDITION_PG_SBFE_NO_FICO = {
+    "column": "risk_grade_path",
+    "allowed_values": ["pg_and_1_plus_sbfe_tradeline_and_fico_no_hit"],
+}
+CONDITION_PG_SBA_FICO = {
+    "column": "risk_grade_path",
+    "allowed_values": ["pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_hit"],
+}
+CONDITION_PG_SBA_NO_FICO = {
+    "column": "risk_grade_path",
+    "allowed_values": ["pg_and_no_sbfe_tradeline_and_1_plus_sba_tradeline_and_fico_no_hit"],
+}
+CONDITION_PG_FICO_ONLY = {
+    "column": "risk_grade_path",
+    "allowed_values": ["pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_hit"],
+}
+CONDITION_PG_NO_HITS = {
+    "column": "risk_grade_path",
+    "allowed_values": ["pg_and_no_sbfe_tradeline_and_no_sba_tradeline_and_fico_no_hit"],
+}
+CONDITION_NO_PG_SBFE = {
+    "column": "risk_grade_path",
+    "allowed_values": ["no_pg_and_1_plus_sbfe_tradeline"],
+}
+CONDITION_NO_PG_SBA = {
+    "column": "risk_grade_path",
+    "allowed_values": ["no_pg_and_no_1_plus_sbfe_tradeline_and_1_plus_sba_tradeline"],
+}
+CONDITION_NO_PG_NO_HITS = {
+    "column": "risk_grade_path",
+    "allowed_values": ["no_pg_no_sbfe_no_sba_no_fico"],
+}
+# CONDITION_PG_FALSE_SBA_FICO_HIT = {
+#     "column": "risk_grade_path",
+#     "allowed_values": ["pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_hit"],
+# }
+# CONDITION_PG_FALSE_SBA_NO_HITS = {
+#     "column": "risk_grade_path",
+#     "allowed_values": ["pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_no_hit"],
+# }
+CONDITION_NO_PG_FALSE_SBA_FICO_HIT = {
+    "column": "risk_grade_path",
+    "allowed_values": ["no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_hit"],
+}
+CONDITION_NO_PG_FALSE_SBA_NO_HITS = {
+    "column": "risk_grade_path",
+    "allowed_values": ["no_pg_and_no_sbfe_tradeline_and_false_1_plus_sba_tradeline_and_fico_no_hit"],
+}
+
+
+
+RISK_GRADE_SEGMENTS_NEW_MODEL = {
+    "pg_sbfe_ln_and_fico": {
+        "condition": CONDITION_PG_SBFE_FICO,
+        "model_cols": ["intercept", "ln_score", "fico_score_filled"],
+        "train_filter": "booked",
+        "core_model_vars": ["fico_score", "ln_score"],
+    },  # LN SBFE hit, use blended score of LN and FICO
+    "pg_sbfe_ln_only": {
+        "condition": CONDITION_PG_SBFE_NO_FICO,
+        "model_cols": ["intercept", "ln_score"],
+        "train_filter": "booked",
+        "core_model_vars": ["ln_score"],
+    },  # LN SBFE hit, no FICO, use LN score only
+    "pg_sba_ln_and_fico": {
+        "condition": CONDITION_PG_SBA_FICO,
+        "model_cols": ["intercept", "ln_score", "fico_score_filled"],
+        "train_filter": "booked",
+        "core_model_vars": ["fico_score", "ln_score"],
+    },  # LN SBA hit, use blended score of LN and FICO
+    "pg_sba_ln_only": {
+        "condition": CONDITION_PG_SBA_NO_FICO,
+        "model_cols": ["intercept", "ln_score"],
+        "train_filter": "booked",
+        "core_model_vars": ["ln_score"],
+    },  # LN SBA hit, no FICO, use LN score only
+    "pg_fico_only": {
+        "condition": CONDITION_PG_FICO_ONLY,
+        "model_cols": ["intercept", "fico_score"],
+        "train_filter": "booked",
+        "core_model_vars": ["fico_score"],
+    },  # PG required, only FICO available
+    "pg_no_hits": {
+        "condition": CONDITION_PG_NO_HITS,
+        "model_cols": ["intercept"],  # Intercept only model
+        "train_filter": "booked",
+        "core_model_vars": [], 
+    }, # PG required, no hits, no FICO
+    "no_pg_sbfe_ln_only": {
+        "condition": CONDITION_NO_PG_SBFE,
+        "model_cols": ["intercept", "ln_score"],
+        "train_filter": "booked",
+        "core_model_vars": ["ln_score"],
+    },  # No PG, SBFE hit, use LN score only
+    "no_pg_sba_ln_only": {
+        "condition": CONDITION_NO_PG_SBA,
+        "model_cols": ["intercept", "ln_score"],
+        "train_filter": "booked",
+        "core_model_vars": ["ln_score"],
+    },  # No PG, SBA hit, use LN score only
+    "no_pg_no_hits": {
+        "condition": CONDITION_NO_PG_NO_HITS,
+        "model_cols": ["intercept"], # Intercept only model
+        "train_filter": "booked",
+        "core_model_vars": [],
+    },  # No PG,FICO hit
+#     "pg_false_sba_fico_hit": {
+#         "condition": CONDITION_PG_FALSE_SBA_FICO_HIT,
+#         "model_cols": ["intercept"], # Intercept only model
+#         "train_filter": "booked",
+#         "core_model_vars": [],
+#     },  # PG Hit 1, FICO hit
+#     "pg_false_sba_no_hits": {
+#         "condition": CONDITION_PG_FALSE_SBA_NO_HITS,
+#         "model_cols": ["intercept"], # Intercept only model
+#         "train_filter": "booked",
+#         "core_model_vars": [],
+#     },  # PG Hit 1, no hits
+    "no_pg_false_sba_fico_hit": {
+        "condition": CONDITION_NO_PG_FALSE_SBA_FICO_HIT,
+        "model_cols": ["intercept"], # Intercept only model
+        "train_filter": "booked",
+        "core_model_vars": [],
+    },  # PG Hit 1, FICO hit
+    "no_pg_false_sba_no_hits": {
+        "condition": CONDITION_NO_PG_FALSE_SBA_NO_HITS,
+        "model_cols": ["intercept"], # Intercept only model
+        "train_filter": "booked",
+        "core_model_vars": [],
+    },  # PG Hit 1, no hits
+}
+
+NORMALIZE_SCORES_NEW_MODEL = True
+
+
+# Define the risk grade thresholds
+NEW_PD_RISK_GRADE_THRESHOLDS = {
+    "1a": (0.00, 0.0009),
+    "1b": (0.0009, 0.0022),
+    "1c": (0.0022, 0.0066),
+    "2a": (0.0066, 0.0110),
+    "2b": (0.0110, 0.0165),
+    "2c": (0.0165, 0.0248),
+    "3a": (0.0248, 0.0371),
+    "3b": (0.0371, 0.0464),
+    "3c": (0.0464, 0.0557),
+    "4a": (0.0557, 0.0835),
+    "4b": (0.0835, 0.1040),
+    "4c": (0.1040, 0.1280),
+    "5a": (0.1280, 0.1570),
+    "5b": (0.1570, 0.1930),
+    "5c": (0.1930, 0.2370),
+    "6a": (0.2370, 0.2910),
+    "6b": (0.2910, 0.3570),
+    "6c": (0.3570, 0.5000),
+    "7a": (0.5000, 0.8140),
+    "7b": (0.8140, 1.0000),
+}
+
+# Define the approval/decline thresholds based on risk grade
+APPROVAL_THRESHOLDS = {
+    "1a": True,
+    "1b": True,
+    "1c": True,
+    "2a": True,
+    "2b": True,
+    "2c": True,
+    "3a": True,
+    "3b": True,
+    "3c": True,
+    "4a": False,  # Decline starts here
+    "4b": False,
+    "4c": False,
+    "5a": False,
+    "5b": False,
+    "5c": False,
+    "6a": False,
+    "6b": False,
+    "6c": False,
+    "7a": False,
+    "7b": False,
+}
