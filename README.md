@@ -1358,14 +1358,6 @@ The following tables summarize the model's performance on existing exposure cust
 
 **SBFE:**
 
-<div class="row">
-  <div class="col-md-8" markdown="1">
-  Some text.
-  </div>
-  <div class="col-md-4" markdown="1">
-  <img height="600px" class="center-block" src="img/pg_sbfe_ln_and_fico_test_no_reject.png">
-  </div>
-</div>
 
 <div style="display: flex;">
   <div style="width: 50%; padding: 10px;">
