@@ -1360,11 +1360,11 @@ The following tables summarize the model's performance on existing exposure cust
 
 <div style="display: flex;">
   <div style="width: 50%; padding: 10px;">
-    <img src="path/to/left/image.jpg" alt="Left Image" style="width: 100%;">
+    <img src="img/pg_sbfe_ln_and_fico_test_no_reject.png" alt="Left Image" style="width: 100%;">
     <p style="text-align: center;">Caption for Left Image</p>
   </div>
   <div style="width: 50%; padding: 10px;">
-    <img src="path/to/right/image.jpg" alt="Right Image" style="width: 100%;">
+    <img src="img/pg_sbfe_ln_and_fico_test_no_reject.png" alt="Right Image" style="width: 100%;">
     <p style="text-align: center;">Caption for Right Image</p>
   </div>
 </div>
