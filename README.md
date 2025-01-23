@@ -1364,7 +1364,9 @@ The following tables summarize the model's performance on existing exposure cust
 
 ![image](img/e_e_risk_grade_pd_pg_sbfe_ln_only.png)
 
+**pd_pg_sba_ln_and_fico**
 
+![image](img/e_e_risk_grade_pg_sba_ln_and_fico.png)
 
 
 
