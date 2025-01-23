@@ -1358,15 +1358,15 @@ The following tables summarize the model's performance on existing exposure cust
 
 **SBFE:**
 
-<div style="overflow: auto;">
-    <div style="float: left; width: 45%;">
+<div style="display: flex;">
+  <div style="width: 50%; padding: 10px;">
     <img src="path/to/left/image.jpg" alt="Left Image" style="width: 100%;">
-    <p style="text-align: center;">Left Image Caption (Optional)</p>
-</div>
-
-<div style="float: right; width: 45%;">
+    <p style="text-align: center;">Caption for Left Image</p>
+  </div>
+  <div style="width: 50%; padding: 10px;">
     <img src="path/to/right/image.jpg" alt="Right Image" style="width: 100%;">
-    <p style="text-align: center;">Right Image Caption (Optional)</p>
+    <p style="text-align: center;">Caption for Right Image</p>
+  </div>
 </div>
 
 
