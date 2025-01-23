@@ -1351,8 +1351,24 @@ The following tables summarize the model's performance on existing exposure cust
 **Key Observations:**
 
 *   Across both Test and Current datasets, the model's general behavior on existing exposure applications seems similar to that observed on new applicants (as evidenced by the lift charts).
-*   The model tends to predict more bookings and decrease default prediction in each segment.
+*   The model tends to predict more bookings and decrease default rate in each segment.
 *   The impact of filters (besides `remove_prepaid_deposit`) on the data seems minimal.
+
+##### Lift Charts by Segment
+
+**SBFE:**
+
+<div style="overflow: auto;">
+    <div style="float: left; width: 45%;">
+    <img src="path/to/left/image.jpg" alt="Left Image" style="width: 100%;">
+    <p style="text-align: center;">Left Image Caption (Optional)</p>
+</div>
+
+<div style="float: right; width: 45%;">
+    <img src="path/to/right/image.jpg" alt="Right Image" style="width: 100%;">
+    <p style="text-align: center;">Right Image Caption (Optional)</p>
+</div>
+
 
 #### 7. Next Steps
 
