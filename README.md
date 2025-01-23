@@ -1354,7 +1354,7 @@ The following tables summarize the model's performance on existing exposure cust
 *   The model tends to predict more bookings and decrease default rate in each segment.
 *   The impact of filters (besides `remove_prepaid_deposit`) on the data seems minimal.
 
-##### Risk Grade Lift Charts by Segment (Current Data)
+##### Risk Grade Lift Charts by Segment (Current Data - Since 02-16-2024)
 
 **pg_sbfe_ln_and_fico**
 
