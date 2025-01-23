@@ -1223,3 +1223,130 @@ The choice of cutoff value is critical when applying the EM algorithm for reject
 * Consider alternative approaches such as using a cutoff based on the default rate of the riskier segment of accepted applicants.
 
 This exploration highlights the sensitivity of the EM algorithm to cutoff values and underscores the need for careful consideration when implementing reject inference.
+
+## 01/23/2025
+### Evaluating Model for Existing Exposure Customers
+
+
+This section outlines the process and results of evaluating the OTR Adjudication model's performance on existing exposure customers.  The goal is to expand the OTR Adjudication model's capabilities to effectively evaluate and decide on applications from customers with pre-existing exposure. This evaluation is a crucial step towards incorporating knockout rules and ensuring accurate model performance specifically for this customer segment. This is the first version of the evaluation.
+
+#### Objectives
+
+*   Define "existing exposure" in the context of OTR adjudication.
+*   Evaluate the performance of the current OTR Adjudication model (without Reject Inference) on existing exposure customers.
+*   Identify any performance differences compared to new applications.
+*   Provide a foundation for implementing knockout rules in the next iteration.
+
+#### 3. Definition of Existing Exposure
+
+The definition of "existing exposure" is based on the risk scope extensions flow defined by BCG.  It's important to explicitly state the agreed-upon definition to ensure consistency. For this evaluation, we are using the following definition derived from BCG's implementation:
+
+```sql
+Case
+When ee.N_ACC > 0
+Or (apps.BOOKED = 0 and apps.EXISTING_EXPOSURE_CHECK_C = 'Failed')
+Then 1
+Else 0
+End As EXISTING_EXPOSURE_CHECK_COMBINED
+```
+
+Where:
+
+*   `ee.N_ACC`: Number of accounts associated with the customer.
+*   `apps.BOOKED`:  Indicates if the application was booked (`sf_online_application_c`).
+*   `apps.EXISTING_EXPOSURE_CHECK_C`: Result of an initial existing exposure check (can be 'Passed' or 'Failed').
+
+**Important Note:** This definition might differ from other existing exposure definitions.
+
+#### Data Source and Limitations
+
+*   **Data Source:** The key variable `N_ACC` (Number of accounts) is obtained from the `DATAIKU_RAW_SUB.RISK_FRAUD.OTR_ADJUDICATION_RISK_SCOPE_EXTENSION_EE_DATA` dataset. This dataset is populated by the "risk scope extensions" flow in Dataiku.
+*   **Data Freshness:**  The current dataset in Dataiku contains information up to **2024-03-13**.  To evaluate recent applications accurately, the "risk scope extensions" flow needs to be re-executed and updated.
+*   **Data Completeness:** Because of the execution delay, the current dataset of existing exposure doesn't contain all recent existing exposure customers, only the ones where `apps.EXISTING_EXPOSURE_CHECK_C = 'Failed'`.
+
+#### Methodology
+
+1.  **Data Selection:** Identified existing exposure customers based on the defined criteria by merging application data with the Risk Scope Extension data.
+2.  **Data Filtering:** Applied the following filters:
+    *   `remove_new_applications`
+    *   `remove_prepaid_deposit`
+    *   `remove_credit_line_approved_lt_1`
+    *   `remove_security_deposit`
+    *   `remove_credit_line_gt_150k`
+    *   `remove_fraud_flag`
+    *   `remove_first_payment_default`
+3.  **Model Application:** Applied the existing OTR Adjudication logistic regression model (without Reject Inference) to the filtered data.  The logistic regression model and normalization values were loaded from `.pkl` files.
+4.  **Performance Analysis:** Compared the model's predictions on the existing exposure data with the actual outcomes (booked vs. non-booked, and booked_is_bad).  The analysis was performed on both a "Test" dataset and the most recent "Current" data.
+
+#### Results
+
+The following tables summarize the model's performance on existing exposure customers in the Test and Current datasets:
+
+##### Test Data
+
+| Dataset | Segment | Subsegment | total_rows | num_booked | num_non_booked | booked_is_bad | predicted_booked | predicted_booked_is_bad |
+|---|---|---|---|---|---|---|---|---|
+| Test| pg_sbfe_ln_and_fico | pg_should_be_required | 436 | 252 | 184 | 27 | 300 | 14 |
+| Test| pg_sbfe_ln_and_fico | pg_should_not_be_required | 33 | 20 | 13 | 2 | 23 | 2 |
+| Test| pg_sbfe_ln_only | pg_should_be_required | 94 | 24 | 70 | 4 | 61 | 0 |
+| Test| pg_sbfe_ln_only | pg_should_not_be_required | 11 | 4 | 7 | 0 | 6 | 0 |
+| Test| pg_sba_ln_and_fico | pg_should_be_required | 84 | 39 | 45 | 6 | 29 | 2 |
+| Test| pg_sba_ln_and_fico | pg_should_not_be_required | 2 | 2 | 0 | 2 | 1 | 1 |
+| Test| pg_sba_ln_only | pg_should_be_required | 32 | 6 | 26 | 0 | 0 | 0 |
+| Test| pg_sba_ln_only | pg_should_not_be_required | 0 | 0 | 0 | 0 | 0 | 0 |
+| Test| pg_fico_only | pg_should_be_required | 559 | 256 | 303 | 33 | 309 | 23 |
+| Test| pg_fico_only | pg_should_not_be_required | 24 | 13 | 11 | 3 | 19 | 3 |
+| Test| pg_no_hits | pg_should_be_required | 95 | 19 | 76 | 4 | 0 | 0 |
+| Test| pg_no_hits | pg_should_not_be_required | 5 | 0 | 5 | 0 | 0 | 0 |
+| Test| no_pg_sbfe_ln_only | pg_should_be_required | 1626 | 1087 | 539 | 83 | 1334 | 59 |
+| Test| no_pg_sbfe_ln_only | pg_should_not_be_required | 233 | 165 | 68 | 17 | 200 | 11 |
+| Test| no_pg_sba_ln_only | pg_should_be_required | 160 | 89 | 71 | 22 | 28 | 5 |
+| Test| no_pg_sba_ln_only | pg_should_not_be_required | 13 | 7 | 6 | 0 | 4 | 0 |
+| Test| no_pg_no_hits | pg_should_be_required | 124 | 52 | 72 | 6 | 124 | 6 |
+| Test| no_pg_no_hits | pg_should_not_be_required | 15 | 8 | 7 | 0 | 15 | 0 |
+| Test| no_pg_false_sba_fico_hit | pg_should_be_required | 84 | 52 | 32 | 5 | 84 | 5 |
+| Test| no_pg_false_sba_fico_hit | pg_should_not_be_required | 1 | 1 | 0 | 0 | 1 | 0 |
+| Test| no_pg_false_sba_no_hits | pg_should_be_required | 379 | 197 | 182 | 31 | 0 | 0 |
+| Test| no_pg_false_sba_no_hits | pg_should_not_be_required | 23 | 13 | 10 | 0 | 0 | 0 |
+
+##### Current Data
+
+| Dataset | Segment | Subsegment | total_rows | num_booked | num_non_booked | booked_is_bad | predicted_booked | predicted_booked_is_bad |
+|---|---|---|---|---|---|---|---|---|
+| Current| pg_sbfe_ln_and_fico | pg_should_be_required | 1847 | 998 | 849 | 12 | 1236 | 7 |
+| Current| pg_sbfe_ln_and_fico | pg_should_not_be_required | 24 | 14 | 10 | 0 | 19 | 0 |
+| Current| pg_sbfe_ln_only | pg_should_be_required | 455 | 231 | 224 | 4 | 352 | 3 |
+| Current| pg_sbfe_ln_only | pg_should_not_be_required | 6 | 4 | 2 | 0 | 6 | 0 |
+| Current| pg_sba_ln_and_fico | pg_should_be_required | 250 | 71 | 179 | 1 | 62 | 0 |
+| Current| pg_sba_ln_and_fico | pg_should_not_be_required | 6 | 1 | 5 | 0 | 1 | 0 |
+| Current| pg_sba_ln_only | pg_should_be_required | 70 | 19 | 51 | 1 | 0 | 0 |
+| Current| pg_sba_ln_only | pg_should_not_be_required | 0 | 0 | 0 | 0 | 0 | 0 |
+| Current| pg_fico_only | pg_should_be_required | 1848 | 766 | 1082 | 11 | 933 | 10 |
+| Current| pg_fico_only | pg_should_not_be_required | 28 | 10 | 18 | 1 | 16 | 1 |
+| Current| pg_no_hits | pg_should_be_required | 503 | 176 | 327 | 5 | 0 | 0 |
+| Current| pg_no_hits | pg_should_not_be_required | 16 | 2 | 14 | 0 | 0 | 0 |
+| Current| no_pg_sbfe_ln_only | pg_should_be_required | 47 | 38 | 9 | 0 | 41 | 0 |
+| Current| no_pg_sbfe_ln_only | pg_should_not_be_required | 424 | 272 | 152 | 3 | 363 | 1 |
+| Current| no_pg_sba_ln_only | pg_should_be_required | 4 | 2 | 2 | 0 | 2 | 0 |
+| Current| no_pg_sba_ln_only | pg_should_not_be_required | 14 | 3 | 11 | 0 | 2 | 0 |
+| Current| no_pg_no_hits | pg_should_be_required | 42 | 27 | 15 | 2 | 42 | 2 |
+| Current| no_pg_no_hits | pg_should_not_be_required | 153 | 80 | 73 | 3 | 153 | 3 |
+| Current| no_pg_false_sba_fico_hit | pg_should_be_required | 1 | 0 | 1 | 0 | 1 | 0 |
+| Current| no_pg_false_sba_fico_hit | pg_should_not_be_required | 1 | 1 | 0 | 0 | 1 | 0 |
+| Current| no_pg_false_sba_no_hits | pg_should_be_required | 4 | 3 | 1 | 0 | 0 | 0 |
+| Current| no_pg_false_sba_no_hits | pg_should_not_be_required | 21 | 10 | 11 | 1 | 0 | 0 |
+
+**Key Observations:**
+
+*   Across both Test and Current datasets, the model's general behavior on existing exposure applications seems similar to that observed on new applicants (as evidenced by the lift charts).
+*   The model tends to predict more bookings and decrease default prediction in each segment.
+*   The impact of filters (besides `remove_prepaid_deposit`) on the data seems minimal.
+
+#### 7. Next Steps
+
+*   **Update Dataiku Flow:** Re-execute the "risk scope extensions" flow in Dataiku to ensure the dataset contains the most recent information on existing exposure customers.
+*   **Define Knockout Rules:**  Collaborate with relevant stakeholders to define a set of knockout rules specifically tailored for existing exposure customers.
+*   **Implement Knockout Rules:** Integrate the defined knockout rules into the OTR Adjudication model.
+*   **Evaluate with Knockout Rules:**  Repeat the model evaluation process, incorporating the knockout rules, to assess their impact on performance.
+*   **Reject Inference Implementation:** Prioritize the implementation of Reject Inference to improve the model's handling of rejected applications.
+*   **Address Data Completeness:** Investigate and address the data completeness issue where the existing exposure dataset only includes applications where `apps.EXISTING_EXPOSURE_CHECK_C = 'Failed'`.  Ensure all relevant existing exposure data is captured.
