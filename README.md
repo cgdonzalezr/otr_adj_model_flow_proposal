@@ -1239,7 +1239,7 @@ This section outlines the process and results of evaluating the OTR Adjudication
 
 #### 3. Definition of Existing Exposure
 
-The definition of "existing exposure" is based on the risk scope extensions flow defined by BCG.  It's important to explicitly state the agreed-upon definition to ensure consistency. For this evaluation, we are using the following definition derived from BCG's implementation:
+The definition of "existing exposure" is based on the risk scope extensions flow defined by BCG.  It's important to explicitly state the agreed-upon definition to ensure consistency. The following definition is obtained by BCG's implementation:
 
 ```sql
 Case
@@ -1249,6 +1249,18 @@ Then 1
 Else 0
 End As EXISTING_EXPOSURE_CHECK_COMBINED
 ```
+
+However, for this evaluation, we are using the following definition derived:
+
+```sql
+Case
+When ee.N_ACC > 0
+Or (apps.EXISTING_EXPOSURE_CHECK_C = 'Failed')
+Then 1
+Else 0
+End As EXISTING_EXPOSURE_CHECK_COMBINED
+```
+
 
 Where:
 
