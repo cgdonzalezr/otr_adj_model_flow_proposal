@@ -1388,8 +1388,6 @@ The following tables summarize the model's performance on existing exposure cust
 
 
 
-
-
 #### 7. Next Steps
 
 *   **Update Dataiku Flow:** Re-execute the "risk scope extensions" flow in Dataiku to ensure the dataset contains the most recent information on existing exposure customers.
@@ -1398,3 +1396,4 @@ The following tables summarize the model's performance on existing exposure cust
 *   **Evaluate with Knockout Rules:**  Repeat the model evaluation process, incorporating the knockout rules, to assess their impact on performance.
 *   **Reject Inference Implementation:** Prioritize the implementation of Reject Inference to improve the model's handling of rejected applications.
 *   **Address Data Completeness:** Investigate and address the data completeness issue where the existing exposure dataset only includes applications where `apps.EXISTING_EXPOSURE_CHECK_C = 'Failed'`.  Ensure all relevant existing exposure data is captured.
+*   **Analyze Existing Exposure and Account Relationship:** Investigate the relationship between existing exposure hits and the number of associated accounts. Specifically, analyze cases where a LexisNexis hit is missing when only one account is reported for an existing exposure.
