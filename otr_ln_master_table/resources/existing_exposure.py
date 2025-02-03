@@ -11,6 +11,8 @@ import config
 
 np.random.seed(config.SEED)
 
+import pandas as pd
+
 def slice_to_dev_sample_ee(data: pd.DataFrame) -> pd.DataFrame:
     """Remove any rows to be excluded from development sample."""
     data = data.copy()  # Avoid changes outside function scope
@@ -53,5 +55,27 @@ def slice_to_dev_sample_ee(data: pd.DataFrame) -> pd.DataFrame:
     # Remove apps that are not child-funded
     data = data.loc[data["funding_type"] != "non_child_funded"]
     filters_applied["remove_non_child_funded"] = len(data)
+
+    #risk scope extensions, generate sample, sql recipe: compute sample 1
+    
+    # Remove accounts with 60 or more days past due in the last 7 years
+    data = data.loc[data["D_MAX_DAYS_PAST_DUE_84M"].fillna(0) < 60]
+    filters_applied["remove_60dpd_in_last_7_years"] = len(data)
+
+    # Remove accounts that are currently suspended
+    data = data.loc[data["D_DAYS_SINCE_LAST_SUSPENSION"].fillna(999) != 0]
+    filters_applied["remove_currently_suspended"] = len(data)
+
+    # Remove accounts that are currently delinquent
+    data = data.loc[data["D_DAYS_SINCE_LAST_1_DPD"].fillna(999) != 0]
+    filters_applied["remove_currently_delinquent"] = len(data)
+
+    # Remove accounts with charge-offs in the last 7 years
+    data = data.loc[data["C_DAYS_SINCE_LAST_CHARGEOFF"].fillna(99999) > 7 * 365 + 2]
+    filters_applied["remove_chargeoffs_in_last_7_years"] = len(data)
+
+    # Remove apps where last account oppened is less than 90 days
+    data = data.loc[data["A_FLAG_LAST_ACCOUNT_OPENED_3M_AGO"] != 1]
+    filters_applied["remove_last_account_opened_lt_90_days"] = len(data)
 
     return data, filters_applied
