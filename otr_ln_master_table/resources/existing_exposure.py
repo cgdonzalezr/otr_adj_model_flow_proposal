@@ -28,33 +28,33 @@ def slice_to_dev_sample_ee(data: pd.DataFrame) -> pd.DataFrame:
     data = data.loc[data["existing_exposure"] == 1]
     filters_applied["remove_new_applications"] = len(data)
 
-    # Remove apps with prepaid or deposit accounts
-    data = data.loc[~data["account_type_c"].fillna("?").isin(["Prepay", "Deposit Account", "?"])]
-    filters_applied["remove_prepaid_deposit"] = len(data)
+    # # Remove apps with prepaid or deposit accounts
+    # data = data.loc[~data["account_type_c"].fillna("?").isin(["Prepay", "Deposit Account", "?"])]
+    # filters_applied["remove_prepaid_deposit"] = len(data)
 
-    # Remove apps with credit line approved < 1
-    data = data.loc[~(data["credit_line_approved_c"] < 1)]
-    filters_applied["remove_credit_line_approved_lt_1"] = len(data)
+    # # Remove apps with credit line approved < 1
+    # data = data.loc[~(data["credit_line_approved_c"] < 1)]
+    # filters_applied["remove_credit_line_approved_lt_1"] = len(data)
 
-    # Remove apps with security deposit
-    data = data.loc[~data["security_deposit_c"]]
-    filters_applied["remove_security_deposit"] = len(data)
+    # # Remove apps with security deposit
+    # data = data.loc[~data["security_deposit_c"]]
+    # filters_applied["remove_security_deposit"] = len(data)
 
-    # Removed apps with credit line > 150,000$
-    data = data.loc[data["credit_line_requested_c"] <= 1.5e5]
-    filters_applied["remove_credit_line_gt_150k"] = len(data)
+    # # Removed apps with credit line > 150,000$
+    # data = data.loc[data["credit_line_requested_c"] <= 1.5e5]
+    # filters_applied["remove_credit_line_gt_150k"] = len(data)
 
-    # Remove apps flagged as fraud
-    data = data.loc[~data["fraud_flag_c"]]
-    filters_applied["remove_fraud_flag"] = len(data)
+    # # Remove apps flagged as fraud
+    # data = data.loc[~data["fraud_flag_c"]]
+    # filters_applied["remove_fraud_flag"] = len(data)
 
-    # Remove first payment defaults
-    data = data.loc[~mt.is_first_payment_default(data)]
-    filters_applied["remove_first_payment_default"] = len(data)
+    # # Remove first payment defaults
+    # data = data.loc[~mt.is_first_payment_default(data)]
+    # filters_applied["remove_first_payment_default"] = len(data)
 
-    # Remove apps that are not child-funded
-    data = data.loc[data["funding_type"] != "non_child_funded"]
-    filters_applied["remove_non_child_funded"] = len(data)
+    # # Remove apps that are not child-funded
+    # data = data.loc[data["funding_type"] != "non_child_funded"]
+    # filters_applied["remove_non_child_funded"] = len(data)
 
     #risk scope extensions, generate sample, sql recipe: compute sample 1
     
@@ -77,5 +77,14 @@ def slice_to_dev_sample_ee(data: pd.DataFrame) -> pd.DataFrame:
     # Remove apps where last account oppened is less than 90 days
     data = data.loc[data["A_FLAG_LAST_ACCOUNT_OPENED_3M_AGO"] != 1]
     filters_applied["remove_last_account_opened_lt_90_days"] = len(data)
+
+    # # Remove no active credit limit in last 3 months
+    # data = data.loc[data["SEG_ANY_EX_ACCOUNT_HAS_ACTIVE_CREDIT_LIMIT_3M"] == 1]
+    # filters_applied["remove_no_active_credit_limit_in_last_3_months"] = len(data)
+
+    # # Remove apps with material exposure at wex in last 24 months
+    # data = data.loc[data["N_MONTH_EXPOSURE_MATERIAL_24M"] == 0]
+    # filters_applied["remove_material_exposure_at_wex"] = len(data)
+
 
     return data, filters_applied
