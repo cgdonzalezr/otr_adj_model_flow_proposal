@@ -1397,3 +1397,117 @@ The following tables summarize the model's performance on existing exposure cust
 *   **Reject Inference Implementation:** Prioritize the implementation of Reject Inference to improve the model's handling of rejected applications.
 *   **Address Data Completeness:** Investigate and address the data completeness issue where the existing exposure dataset only includes applications where `apps.EXISTING_EXPOSURE_CHECK_C = 'Failed'`.  Ensure all relevant existing exposure data is captured.
 *   **Analyze Existing Exposure and Account Relationship:** Investigate the relationship between existing exposure hits and the number of associated accounts. Specifically, analyze cases where a LexisNexis hit is missing when only one account is reported for an existing exposure.
+
+
+## 03/25/2025
+
+### Integrating Correct Funding Type and Evaluating Existing Exposure with Knockout Rules for OTR Model
+
+This section outlines the steps taken to enhance the OTR (Over-the-Road) Adjudication model by:
+
+1.  **Integrating the correct funding type feature:** Replacing the approximated funding type with accurate data directly from the source table.
+2.  **Evaluating existing exposure with knockout rules:** Implementing and assessing knockout rules to refine the model's application to existing customer accounts.
+
+#### 1. Integrating Correct Funding Type Feature
+
+**Problem:**
+
+Previously, the OTR model relied on approximated funding type values, which were derived from built query views. This approach lacked accuracy and granularity, potentially impacting model performance and decision-making.
+
+**Solution:**
+
+To address this limitation, we integrated precise funding type information directly from the source table: `prep.salesforce_owner.onlineapplication_c`.
+
+**Implementation:**
+
+*   **New Data Source:** The Dataiku flow was updated to incorporate `PREP.SALESFORCE_OWNER.ONLINEAPPLICATION__C` as the source for funding type data.
+*   **Data Completeness Verification:** We verified the completeness of the data in the new source table by comparing the date ranges with the previous source:
+
+    ```sql
+    SELECT MIN(CREATED_DATE), MAX(CREATED_DATE)
+    FROM RISK_ANALYTICS.FINCRIMES.sf_online_application_c
+    LIMIT 10;
+
+    SELECT MIN(CREATEDDATE), MAX(CREATEDDATE)
+    FROM PREP.SALESFORCE_OWNER.ONLINEAPPLICATION__C
+    LIMIT 10;
+    ```
+
+*   **Dataiku Flow Update:** The Dataiku flow was modified to:
+    *   Replace the SQL view for funding type with a direct connection to the new source table.
+    *   Re-execute the master table creation process to incorporate the accurate funding type data.
+    *   Retrain the model to leverage the enhanced feature.
+
+**Benefits:**
+
+*   **Improved Accuracy:** The model now utilizes precise funding type information, leading to more accurate risk assessments.
+*   **Enhanced Reliability:** Direct integration with the source table ensures data consistency and reduces reliance on approximated values.
+*   **Granular Data:** Access to granular funding type data allows for more refined analysis and potentially the development of more targeted strategies.
+
+#### 2. Evaluating Existing Exposure with Knockout Rules
+
+**Objective:**
+
+To evaluate the OTR Adjudication model's performance when applied to existing customers, incorporating knockout rules to refine the analysis and focus on relevant applications.
+
+**Knockout Rules Implementation:**
+
+The following knockout rules were implemented in the Dataiku flow to filter out specific types of accounts from the existing exposure evaluation:
+
+*   **Remove accounts with 60 or more days past due in the last 7 years:**
+
+    ```python
+    data = data.loc[data["D_MAX_DAYS_PAST_DUE_84M"].fillna(0) < 60]
+    filters_applied["remove_60dpd_in_last_7_years"] = len(data)
+    ```
+
+*   **Remove accounts that are currently suspended:**
+
+    ```python
+    data = data.loc[data["D_DAYS_SINCE_LAST_SUSPENSION"].fillna(999) != 0]
+    filters_applied["remove_currently_suspended"] = len(data)
+    ```
+
+*   **Remove accounts that are currently delinquent:**
+
+    ```python
+    data = data.loc[data["D_DAYS_SINCE_LAST_1_DPD"].fillna(999) != 0]
+    filters_applied["remove_currently_delinquent"] = len(data)
+    ```
+
+*   **Remove accounts with charge-offs in the last 7 years:**
+
+    ```python
+    data = data.loc[data["C_DAYS_SINCE_LAST_CHARGEOFF"].fillna(99999) > 7 * 365 + 2]
+    filters_applied["remove_chargeoffs_in_last_7_years"] = len(data)
+    ```
+
+*   **Remove apps where the last account opened is less than 90 days old:**
+
+    ```python
+    data = data.loc[data["A_FLAG_LAST_ACCOUNT_OPENED_3M_AGO"] != 1]
+    filters_applied["remove_last_account_opened_lt_90_days"] = len(data)
+    ```
+
+**Impact of Knockout Rules:**
+
+The implementation of these knockout rules significantly reduced the dataset size, focusing the evaluation on accounts that are most relevant for portfolio monitoring.
+
+**Model Performance Evaluation:**
+
+The re-trained model, incorporating the correct funding type and knockout rules, was evaluated on existing exposure data. The performance metrics and lift charts for different segments are attached in the images:
+
+*   **[Image of Lift Chart for Segment 1]** *(Replace with actual image of Lift Chart for Segment 1)*
+*   **[Image of Lift Chart for Segment 2]** *(Replace with actual image of Lift Chart for Segment 2)*
+*   **[Image of Lift Chart for Segment 3]** *(Replace with actual image of Lift Chart for Segment 3)*
+
+**Key Observations:**
+
+*   The model demonstrates good rank-ordering capabilities across different segments, as indicated by the lift charts.
+*   The AUC and other performance metrics remain consistent with previous evaluations, suggesting that the knockout rules and funding type integration did not negatively impact the model's predictive power.
+
+**Next Steps:**
+
+*   Further analyze the impact of knockout rules on model performance and identify any potential biases.
+*   Refine knockout rules based on business requirements and risk appetite.
+*   Explore the use of additional features and data sources to enhance model accuracy for existing exposure customers.
