@@ -1499,13 +1499,13 @@ The implementation of these knockout rules significantly reduced the dataset siz
 
 The re-trained model, incorporating the correct funding type and knockout rules, was evaluated on existing exposure data. The performance metrics and lift charts for different segments are attached in the images:
 
-*   **dds** ![sbfe_ln_and_fico](img/e_e_second_risk_grade_pg_sbfe_ln_and_fico.png)
-*   **dds** ![sbfe_ln_only](img/e_e_second_risk_grade_pg_sbfe_ln_only.png)
-*   **dds** ![sba_ln_and_fico](img/e_e_second_risk_grade_pd_pg_sba_ln_and_fico.png)
-*   **dds** ![sba_ln_only](img/e_e_second_risk_grade_pg_sba_ln_only.png)
-*   **dds** ![fico_only](img/e_e_second_risk_grade_pd_pg_fico_only.png)
-*   **dds** ![no_pg_sbfe_ln_only](img/e_e_second_risk_grade_no_pg_sbfe_ln_only.png)
-*   **dds** ![no_pg_sba_ln_only](img/e_e_second_risk_grade_no_pg_sba_ln_only.png)
+*   **sbfe_ln_and_fico** ![sbfe_ln_and_fico](img/e_e_second_risk_grade_pg_sbfe_ln_and_fico.png)
+*   **sbfe_ln_only** ![sbfe_ln_only](img/e_e_second_risk_grade_pg_sbfe_ln_only.png)
+*   **sba_ln_and_fico** ![sba_ln_and_fico](img/e_e_second_risk_grade_pd_pg_sba_ln_and_fico.png)
+*   **sba_ln_only** ![sba_ln_only](img/e_e_second_risk_grade_pg_sba_ln_only.png)
+*   **fico_only** ![fico_only](img/e_e_second_risk_grade_pd_pg_fico_only.png)
+*   **no_pg_sbfe_ln_only** ![no_pg_sbfe_ln_only](img/e_e_second_risk_grade_no_pg_sbfe_ln_only.png)
+*   **no_pg_sba_ln_only** ![no_pg_sba_ln_only](img/e_e_second_risk_grade_no_pg_sba_ln_only.png)
 
 
 **Key Observations:**
