@@ -223,7 +223,6 @@ def filter_df_for_condition(df: pd.DataFrame, cond_dict: Dict) -> pd.DataFrame:
     return df_out
 
 
-
 def generate_model_parameters_df(models_dict: Dict[str, Dict]) -> pd.DataFrame:
     """Generate a dataframe that holds the parameters for the score blending.
 
@@ -231,49 +230,52 @@ def generate_model_parameters_df(models_dict: Dict[str, Dict]) -> pd.DataFrame:
     ----------
     models_dict : Dict[str, Dict]
         A dictionary where keys are segment names and values are dictionaries
-        containing the model outputs from the `fit_risk_grades` function
+        containing the model outputs from the `fit_risk_grades` function.
 
     Returns
     -------
     pd.DataFrame
         A dataframe containing the model parameters.
     """
-
     df_list = []
-    # get the logistic regression parameters for all segments
+    # Process each segment's model output
     for segment, model_output in models_dict.items():
-        
-        # Check if it's a basic logistic regression or a reject inference method result
-        if model_output['method_name'] == 'logistic_regression':
-            model = model_output['financed_model']
-
-            #Ensure model is not None before extracting params
-            if model is not None:
-                df = model.params.to_frame().transpose()
-                df["segment"] = segment
-                df_list.append(df)
-            else:
-                print(f"Skipping segment {segment} because model is None")
-        
-        elif model_output['infered_model'] is not None:
-            model = model_output['infered_model']
-             #Ensure model is not None before extracting params
-            if model is not None:
-                df = model.params.to_frame().transpose()
-                df["segment"] = segment
-                df_list.append(df)
-            else:
-                 print(f"Skipping segment {segment} because model is None")
+        # Try to extract a model from the known keys
+        if model_output.get('method_name') == 'logistic_regression':
+            model = model_output.get('financed_model', None)
+        elif model_output.get('infered_model') is not None:
+            model = model_output.get('infered_model', None)
         else:
             print(f"Skipping segment {segment} because it does not have parameters to extract")
             continue
 
-    # combine results
-    df_params = pd.concat(df_list, sort=False)
+        if model is None:
+            print(f"Skipping segment {segment} because model is None")
+            continue
 
-    # fix format
-    df_params = df_params[["segment"] + [x for x in df_params.columns if x != "segment"]]
-    df_params = df_params.reset_index(drop=True)
+        # Attempt to extract parameters in a robust way
+        try:
+            # If model.params is a pandas Series with a to_frame method, use it directly.
+            if hasattr(model.params, "to_frame"):
+                df = model.params.to_frame().transpose()
+            else:
+                # Otherwise, create a DataFrame from the parameters.
+                df = pd.DataFrame([model.params])
+        except Exception as e:
+            print(f"Error processing model parameters for segment {segment}: {e}")
+            continue
+
+        df["segment"] = segment
+        df_list.append(df)
+
+    if not df_list:
+        return pd.DataFrame()
+
+    # Combine results into a single dataframe
+    df_params = pd.concat(df_list, sort=False)
+    # Ensure 'segment' is the first column in the dataframe
+    cols = ["segment"] + [col for col in df_params.columns if col != "segment"]
+    df_params = df_params[cols].reset_index(drop=True)
 
     return df_params
     
@@ -433,41 +435,17 @@ def apply_fitted_models_to_data(
     RISK_GRADE_SEGMENTS: Dict,
     NORMALIZE_SCORES: bool = True,
 ) -> pd.DataFrame:
-    """Apply fitted logistic regression models to data.
-
-    Parameters
-    ----------
-    data
-        Data to apply models to
-    models_dict
-        Dictionary of fitted models for each segment
-    normalization_dict
-        Dictionary of normalization parameters for each segment
-    RISK_GRADE_SEGMENTS
-        Configuration for segments
-
-    Returns
-    -------
-    data
-        Copy of original data, with model predictions for each segment
-    """
-
-    # Avoid changes outside function scope
+    """Apply fitted logistic regression models to data."""
     data = data.copy()
+    data_out = pd.DataFrame()  # Ensure data_out is initialized
     
-    # iterate over all segments
     for segment_name, params in RISK_GRADE_SEGMENTS.items():
-        # filter data for segment
         data_i = filter_df_for_condition(df=data, cond_dict=params["condition"])
         
-        # normalize independent variables if necessary
         if NORMALIZE_SCORES:
             model_cols_norm = []
             for col in params["model_cols"]:
-                if (
-                    normalization_dict[segment_name] is not None
-                    and col in normalization_dict[segment_name]
-                ):
+                if normalization_dict.get(segment_name) and col in normalization_dict[segment_name]:
                     data_i[col + "_z"] = (
                         data_i[col] - normalization_dict[segment_name][col]["mean"]
                     ) / normalization_dict[segment_name][col]["std"]
@@ -476,39 +454,44 @@ def apply_fitted_models_to_data(
                     model_cols_norm.append(col)
         else:
             model_cols_norm = params["model_cols"]
-
-        # apply model and store prediction
-        if len(data_i) > 0:  # avoid error if segment is empty
-            if models_dict[segment_name]['method_name'] == 'logistic_regression':
-                model = models_dict[segment_name]['financed_model']
-                if model is not None:
-                    data_i[f"pd_{segment_name}"] = model.predict(
-                        exog=data_i[model_cols_norm]
-                     )
-                else:
-                     print(f"Skipping segment {segment_name} because model is None")
-                     continue
-
-            elif models_dict[segment_name]['infered_model'] is not None:
-                 model = models_dict[segment_name]['infered_model']
-                 if model is not None:
-                    data_i[f"pd_{segment_name}"] = model.predict(
-                            exog=data_i[model_cols_norm]
-                    )
-                 else:
-                     print(f"Skipping segment {segment_name} because model is None")
-                     continue
-            else:
-                print(f"Skipping segment {segment_name} because it does not have a model to predict with")
+        
+        if len(data_i) > 0:
+            model = models_dict[segment_name].get('financed_model') or models_dict[segment_name].get('infered_model')
+            if model is None:
+                print(f"Skipping segment {segment_name} because model is None")
                 continue
-
-        # combine results for all segments
-        if segment_name == list(RISK_GRADE_SEGMENTS.keys())[0]:
-            data_out = data_i
-        else:
-            data_out = pd.concat([data_out, data_i], axis=0)
-
+            
+            try:
+                exog_data = data_i[model_cols_norm]
+                
+                # Ensure constant term is added if required
+                if hasattr(model, 'params') and "const" in model.params.index:
+                    if "const" not in exog_data.columns:
+                        exog_data = sm.add_constant(exog_data, has_constant='add')
+                
+                # Debugging: Print shapes
+                print(f"Segment: {segment_name}")
+                print(f"Expected features in model: {model.params.shape}")
+                print(f"Actual features in data: {exog_data.shape}")
+                print(f"Columns in exog_data: {exog_data.columns.tolist()}")
+                
+                # Align columns with the model's expected features
+                expected_cols = model.params.index.tolist()
+                missing_cols = [col for col in expected_cols if col not in exog_data.columns]
+                if missing_cols:
+                    print(f"⚠️ Missing columns in segment {segment_name}: {missing_cols}")
+                exog_data = exog_data.reindex(columns=expected_cols, fill_value=0)
+                
+                # Apply model
+                data_i[f"pd_{segment_name}"] = model.predict(exog=exog_data)
+            except Exception as e:
+                print(f"Error applying model for segment {segment_name}: {e}")
+                continue
+            
+        data_out = pd.concat([data_out, data_i], axis=0)
+    
     return data_out
+
 
 
 
