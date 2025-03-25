@@ -1493,6 +1493,8 @@ The following knockout rules were implemented in the Dataiku flow to filter out 
 
 The implementation of these knockout rules significantly reduced the dataset size, focusing the evaluation on accounts that are most relevant for portfolio monitoring.
 
+![image](img/e_e_knockout_rules_impact.png)
+
 **Model Performance Evaluation:**
 
 The re-trained model, incorporating the correct funding type and knockout rules, was evaluated on existing exposure data. The performance metrics and lift charts for different segments are attached in the images:
