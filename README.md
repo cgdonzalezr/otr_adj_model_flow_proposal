@@ -1508,6 +1508,37 @@ The re-trained model, incorporating the correct funding type and knockout rules,
 *   **no_pg_sba_ln_only** ![no_pg_sba_ln_only](img/e_e_second_risk_grade_no_pg_sba_ln_only.png)
 
 
+### Normalization Scores and Estimated Parameters
+
+The following table shows the normalization scores and estimated parameters for each segment:
+
+**Normalization Scores:**
+
+| Segment                  | Score Type | Standard Deviation | Mean    |
+|--------------------------|------------|--------------------|---------|
+| pg_sbfe_ln_and_fico    | ln_score   | 54.78              | 691.60  |
+| pg_sbfe_ln_and_fico    | fico_score | 63.88              | 710.15  |
+| pg_sbfe_ln_only        | ln_score   | 66.71              | 683.92  |
+| pg_sba_ln_and_fico     | ln_score   | 45.74              | 685.62  |
+| pg_sba_ln_and_fico     | fico_score | 72.45              | 647.36  |
+| pg_sba_ln_only         | ln_score   | 49.39              | 674.36  |
+| pg_fico_only           | fico_score | 74.23              | 678.29  |
+| no_pg_sbfe_ln_only     | ln_score   | 62.04              | 695.65  |
+| no_pg_sba_ln_only      | ln_score   | 50.56              | 682.03  |
+
+ **Estimated Parameters:**
+
+| segment | intercept | ln_score_z | fico_score_z |
+|---|---|---|---|
+| pg_sbfe_ln_and_fico | -4.288895 | -0.793140 | -1.038736 |
+| pg_sbfe_ln_only | -4.081015 | -1.906164 | NaN |
+| pg_sba_ln_and_fico | -2.343064 | -0.494773 | -1.026054 |
+| pg_sba_ln_only | -2.505502 | 0.081331 | NaN |
+| pg_fico_only | -3.177618 | NaN | -1.231662 |
+| no_pg_sbfe_ln_only | -3.888340 | -0.988782 | NaN |
+| no_pg_sba_ln_only | -2.259840 | -0.636231 | NaN |
+
+
 **Key Observations:**
 
 *   The model demonstrates good rank-ordering capabilities across different segments, as indicated by the lift charts.
