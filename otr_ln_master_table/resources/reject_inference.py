@@ -6,6 +6,13 @@ from sklearn.model_selection import train_test_split
 import statsmodels.api as sm
 from patsy import dmatrix, dmatrices
 
+import warnings
+warnings.filterwarnings(
+    action='ignore',
+    category=UserWarning,
+    module='snowflake.connector'
+)
+
 # https://medium.com/@hjdlopes/should-we-reject-reject-inference-an-empirical-study-4f1e5d86bcf4
 # https://cer.business-school.ed.ac.uk/wp-content/uploads/sites/55/2017/03/Paper-25-Presentation.pdf
 # https://www.mathworks.com/help/risk/reject-inference-for-credit-scorecards.html#RejectingInferenceMethodologyExample-6
@@ -13,6 +20,27 @@ from patsy import dmatrix, dmatrices
 # https://www.crc.business-school.ed.ac.uk/sites/crc/files/2023-10/Modified-logistic-regression-using-the-EM-algorithm-for-reject-inference.pdf
 
 # https://docs.google.com/presentation/d/1ZH63C0UjLsQimlhcEzbjB1rSv9um_MX_UzMZ0z457b8/edit#slide=id.g31e1a061c2e_0_15463
+
+import os
+import sys
+
+current_dir = os.getcwd()
+resources_folder = os.path.join(current_dir, '..', 'resources')
+sys.path.append(resources_folder)
+
+from snowflake_connector import conn
+with open("../resources/sql/OTR_ADJ_RISK_PREPROCESSED_SAMPLE_MODEL_MONITORING.sql") as nam_file:
+    nam_sql = nam_file.read()
+
+cur = conn.cursor()
+
+cur.execute(nam_sql)
+
+df = cur.fetch_pandas_all()
+df = pd.DataFrame.from_records(iter(cur), columns=[x[0] for x in cur.description])
+
+cur.close()
+
 
 
 def hard_cutoff_augmentation(xf, xnf, yf):
