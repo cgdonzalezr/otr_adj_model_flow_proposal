@@ -600,7 +600,7 @@ def apply_risk_grade_path(
         ):
   """Applies risk grade path logic to a given dataframe."""
   evaluated_conditions = [condition(df) for condition in conditions]
-  df['risk_grade_path'] = np.select(evaluated_conditions, choices, default=np.nan)
+  df['risk_grade_path'] = np.select(evaluated_conditions, choices, default="NAN")
   return df
 
 
