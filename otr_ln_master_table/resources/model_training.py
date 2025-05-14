@@ -770,15 +770,15 @@ def compute_decile_table(
     binded_df["TOTAL_EVENT_RATE"] =  binded_df[target].mean()
 
     # Calculate the number of accounts and default accounts for each decile
-    decile_df = binded_df.groupby("DECILE").agg(
+    decile_df = binded_df.groupby("DECILE", observed=False).agg(
         COUNT=(y_pred_proba, "count"),
         DEFAULT=(target, "sum"),
         TOTAL_EVENT_RATE=("TOTAL_EVENT_RATE", "mean"),
     ).reset_index()
 
     # Calculate the predicted probability range for each decile
-    decile_df["PROB_RANGE"] = binded_df.groupby("DECILE")[y_pred_proba].agg(["min", "max"]).apply(lambda x: f"({x['min']:.4f} - {x['max']:.4f}]", axis=1).values
-    decile_df["AVG_PROB"] = binded_df.groupby("DECILE")[y_pred_proba].agg(["mean"]).values
+    decile_df["PROB_RANGE"] = binded_df.groupby("DECILE", observed=False)[y_pred_proba].agg(["min", "max"]).apply(lambda x: f"({x['min']:.4f} - {x['max']:.4f}]", axis=1).values
+    decile_df["AVG_PROB"] = binded_df.groupby("DECILE", observed=False)[y_pred_proba].agg(["mean"]).values
     decile_df["AVG_PROB"] = round(decile_df["AVG_PROB"], 4)
 
     # sort dataframes by decile
@@ -942,14 +942,14 @@ def compute_risk_grade_table(
     binded_df["TOTAL_EVENT_RATE"] =  binded_df[target].mean()
 
     # Calculate the number of accounts and default accounts for each decile
-    risk_grade_df = binded_df.groupby(risk_grade_column).agg(
+    risk_grade_df = binded_df.groupby(risk_grade_column, observed=False).agg(
         COUNT=(y_pred_proba, "count"),
         DEFAULT=(target, "sum"),
         TOTAL_EVENT_RATE=("TOTAL_EVENT_RATE", "mean"),
     ).reset_index()
 
     # Calculate the avg predicted probability
-    risk_grade_df["AVG_PROB"] = binded_df.groupby(risk_grade_column)[y_pred_proba].agg(["mean"]).values
+    risk_grade_df["AVG_PROB"] = binded_df.groupby(risk_grade_column, observed=False)[y_pred_proba].agg(["mean"]).values
     risk_grade_df["AVG_PROB"] = round(risk_grade_df["AVG_PROB"], 4)
 
     # sort dataframes by decile
