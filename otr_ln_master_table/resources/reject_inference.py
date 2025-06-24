@@ -126,8 +126,18 @@ def fuzzy_augmentation(xf, xnf, yf):
     """
     print("Fuzzy augmentation method")
 
+    # Debug: Check initial data
+    print(f"Number of accepts: {len(yf)}")
+    print(f"Number of rejects: {len(xnf)}")
+    print(f"Accepted feature columns: {list(xf.columns)}")
+    print(f"Rejected feature columns: {list(xnf.columns)}")
+
     # Ensure yf is numeric (0 for good, 1 for bad - assuming this from the example)
     yf_numeric = pd.Series(np.where(yf == 0, 0, 1), index=yf.index)
+
+    # Debug: Ensure shapes are consistent
+    print(f"X_accepted shape: {xf.shape}, X_rejected shape: {xnf.shape}, y_accepted shape: {yf.shape}")
+
 
     # 1. Build a scorecard using the accepts only
     print("Training model on accepts only...")
@@ -159,7 +169,7 @@ def fuzzy_augmentation(xf, xnf, yf):
 
     # 4. Create and fit a scorecard on the combined data
     print("Training model on combined data with fuzzy augmentation...")
-    model_combined = Logit(combined_data['status'], combined_data, weights=combined_data['Weights']).fit(maxiter=100)
+    model_combined = Logit(combined_data['status'], combined_data[xf.columns], weights=combined_data['Weights']).fit(maxiter=100)
     print(model_combined.summary())
 
     return {
@@ -170,97 +180,7 @@ def fuzzy_augmentation(xf, xnf, yf):
     }
 
 
-
-
-# def em_algorithm(xf, xnf, yf, max_iterations=100, convergence_threshold=1e-5):
-#     """
-#     Implements the Expectation-Maximization (EM) algorithm for reject inference.
-
-#     Args:
-#         xf (pd.DataFrame): Features of accepted applicants.
-#         xnf (pd.DataFrame): Features of rejected applicants.
-#         yf (pd.Series): Target variable (good/bad status) of accepted applicants.
-#                       Assumes 0 for good, 1 for bad.
-#         max_iterations (int): Maximum number of EM iterations.
-#         convergence_threshold (float): Threshold for convergence of model parameters.
-
-#     Returns:
-#         dict: A dictionary containing the trained Logistic Regression models and method name:
-#                - 'method_name': The name of the method.
-#                - 'financed_model': The model trained on accepts only.
-#                - 'acceptance_model': None (not applicable for this method).
-#                - 'infered_model': The model trained using the EM algorithm.
-#     """
-#     print("Expectation Maximization (EM) algorithm")
-
-#     # Num of accepts
-#     print(f"Number of accepts: {len(yf)}")
-
-#     # Num of rejects
-#     print(f"Number of rejects: {len(xnf)}")
-
-#     # Ensure yf is numeric (0 for good, 1 for bad)
-#     yf_numeric = pd.Series(np.where(yf == 0, 0, 1), index=yf.index)
-
-#     # Calculate the bad rate of the accepts
-#     # bad_rate_accepts = yf_numeric.mean()
-#     bad_rate_accepts = 0.03
-
-#     # 1. Initialization: Train a model with the accepts only
-#     print("Initialization: Training model on accepts only...")
-#     model_accepts_only = Logit(yf_numeric, xf).fit()
-#     print(model_accepts_only.summary())
-
-#     current_model = model_accepts_only
-#     previous_params = None
-
-#     for iteration in range(max_iterations):
-#         print(f"EM Iteration: {iteration + 1}")
-
-#         # E-step: Calculate the probability of being bad for the rejects and assign labels
-#         print("E-step: Calculating probabilities and assigning labels to the rejects...")
-#         scores_rejects = current_model.predict(xnf)
-
-#         # option 1 - Hard cutoff (assigns 1 if score > bad_rate_accepts) (Coefficents explode to reject more)
-#         print(f"Classifying rejects using accepts bad rate: {bad_rate_accepts}, having {len(yf_numeric)} accepts")
-#         response_rejects = pd.Series(np.where(scores_rejects > bad_rate_accepts, 1, 0), index=xnf.index)
-#         # Count of estimated bads
-#         print(f"Estimated bads: {response_rejects.sum()}")
-#         print(f"Estimated goods: {len(response_rejects) - response_rejects.sum()}")
-          
-#         # option 2 - Rejected target variable is the probability of being bad (Coefficents not changing)
-#         # response_rejects = scores_rejects
-
-#         # M-step: Create the combined dataset and train a new model
-#         print("M-step: Creating combined dataset and training the model...")
-#         accepts_data = xf.assign(status=yf_numeric)
-#         rejects_data = xnf.assign(status=response_rejects)
-#         combined_data = pd.concat([accepts_data, rejects_data])
-
-#         em_model = Logit(combined_data['status'], combined_data[xf.columns]).fit(maxiter=100, disp=False)
-#         print(em_model.summary())
-
-#         # Check for convergence
-#         if previous_params is not None:
-#             param_change = np.sum(np.abs(em_model.params - previous_params))
-#             print(f"Change in parameters: {param_change}")
-#             if param_change < convergence_threshold:
-#                 print("Convergence reached.")
-#                 break
-
-#         previous_params = em_model.params.copy()
-#         current_model = em_model
-
-#     return {
-#         'method_name': 'em_algorithm',
-#         'financed_model': model_accepts_only,
-#         'acceptance_model': None,
-#         'infered_model': current_model
-#     }
-
-
-
-
+import matplotlib.pyplot as plt
 
 def em_algorithm(xf, xnf, yf, max_iterations=100, convergence_threshold=1e-5):
     """
@@ -280,7 +200,9 @@ def em_algorithm(xf, xnf, yf, max_iterations=100, convergence_threshold=1e-5):
               - 'financed_model': Model trained on accepted applicants only.
               - 'acceptance_model': None (not applicable for this method).
               - 'infered_model': Model trained using the EM algorithm.
-    """
+    """    
+    print("EM Reject Inference method using statsmodels GLM")
+
     # Debug: Check initial data
     print(f"Number of accepts: {len(yf)}")
     print(f"Number of rejects: {len(xnf)}")
@@ -297,34 +219,44 @@ def em_algorithm(xf, xnf, yf, max_iterations=100, convergence_threshold=1e-5):
 
     # Train the financed model on accepted applicants only using GLM (logistic regression)
     print("Training initial model on accepted applicants...")
-    financed_model = sm.GLM(y_accepted, X_accepted, family=sm.families.Binomial()).fit()
-    print("Initial financed model parameters:")
-    print(financed_model.params)
+    financed_model = sm.GLM(y_accepted, pd.DataFrame(X_accepted,columns=xf.columns), family=sm.families.Binomial()).fit()
+    print(financed_model.summary())
     
     # Initialize the EM model with the financed model
+    print("Scoring rejects...")
     model = financed_model
     prev_params = None
 
+    print("Creating combined dataset with weighted rejects...")
+    print("Training model on combined data with EM algorithm...")
     for i in range(max_iterations):
+        
         # === E-Step ===
         # Predict probabilities for rejected applicants
         if X_rejected.shape[0] > 0:
-            p_rejected = model.predict(X_rejected)
+            p_rejected = np.clip(model.predict(X_rejected), 0.05, 0.95)  # Ensure probabilities are within a reasonable range
+            # print("Distrobution of predicted probabilities for rejected applicants:")
+            # print(np.percentile(p_rejected, [0, 25, 50, 75, 100]))
         else:
             print("No rejected applicants to process. Exiting loop.")
             break
 
         # === M-Step ===
         # Create the augmented dataset:
-        X_augmented = np.vstack([X_accepted, X_rejected, X_rejected])
-        y_augmented = np.concatenate([y_accepted, np.ones(len(X_rejected)), np.zeros(len(X_rejected))])
+        X_augmented = pd.DataFrame(np.vstack([X_accepted, X_rejected, X_rejected]),columns =xf.columns)
+        y_augmented = np.concatenate([y_accepted, np.ones(len(X_rejected)), np.zeros(len(X_rejected))]) # type: ignore
         sample_weights = np.concatenate([np.ones(len(X_accepted)), p_rejected, 1 - p_rejected])
 
         # Fit a new GLM model on the augmented data with frequency weights
+        
         new_model = sm.GLM(y_augmented, X_augmented, family=sm.families.Binomial(), freq_weights=sample_weights).fit()
 
         # Compute parameter change for convergence check
         if prev_params is not None:
+            # print(f"Iteration {i+1} new parameters:")
+            # print(new_model.params)
+            # print(f"Iteration {i+1} previous parameters:")
+            # print(prev_params)
             param_change = np.max(np.abs(new_model.params - prev_params))
             print(f"Iteration {i+1} parameter change: {param_change:.6f}")
             if param_change < convergence_threshold:
@@ -338,6 +270,7 @@ def em_algorithm(xf, xnf, yf, max_iterations=100, convergence_threshold=1e-5):
         prev_params = new_model.params.copy()
         model = new_model
 
+    print(model.summary())
     print("Final inferred model parameters:")
     print(model.params)
     

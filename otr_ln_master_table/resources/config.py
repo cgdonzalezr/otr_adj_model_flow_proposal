@@ -250,6 +250,23 @@ EDGE_PROGRAM_NAMES = [
 
 
 
+CONDITIONS_CURRENT_MODEL = [
+    (lambda df: (df['sbfecardcount_ln'] >= 0)),
+    (lambda df: (df['sbfecardcount_ln'] < 0) & (df['b2bcnt2y_ln'] >= 0)),
+    (lambda df: (df['sbfecardcount_ln'] < 0) & (df['b2bcnt2y_ln'] < 0)),
+    (lambda df: (df['sbfecardcount_ln'].isnull()) & (df['b2bcnt2y_ln'].isnull()))
+]
+
+
+CHOICES_CURRENT_MODEL = [
+    'sbfe',
+    'sba',
+    'double_no_hit',
+    'UNKNOWN'
+]
+
+
+
 CONDITIONS_NEW_MODEL = [
     (lambda df: (df['pg_required_c'] == True) & (df['sbfeaccountcount_ln'] >= 1) & (df['sbfehitindex_ln'] >= 2) & (df['fico_score'].notnull())),
     (lambda df: (df['pg_required_c'] == True) & (df['sbfeaccountcount_ln'] >= 1) & (df['sbfehitindex_ln'] >= 2) & (df['fico_score'].isnull())),

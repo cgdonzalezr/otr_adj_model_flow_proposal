@@ -1,11 +1,12 @@
 import pandas as pd
 import numpy as np
 from functools import partial
-from typing import List, Dict, Optional, Tuple
+from typing import Any, List, Dict, Optional, Tuple
 import numpy as np
 import pandas as pd
 from sklearn.metrics import roc_auc_score
 from statsmodels.discrete.discrete_model import Logit, BinaryResultsWrapper
+import statsmodels.api as sm
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
@@ -23,7 +24,7 @@ def is_first_payment_default(data: pd.DataFrame) -> pd.Series:
         & (data.past_due_total + data.current_ar_total > 100)
     )
 
-def slice_to_dev_sample(data: pd.DataFrame) -> pd.DataFrame:
+def slice_to_dev_sample(data: pd.DataFrame) -> tuple[pd.DataFrame, Dict[str, int]]:
     """Remove any rows to be excluded from development sample."""
     data = data.copy()  # Avoid changes outside function scope
 
@@ -138,39 +139,39 @@ def default_pie_chart(data: pd.DataFrame) -> None:
 
 
 
-def build_model_development_sample(data: pd.DataFrame) -> pd.DataFrame:
+def build_model_development_sample(data: pd.DataFrame) -> tuple[pd.DataFrame, Dict[str, int]]:
     """Filter for samples to be included in development data and restrict to dev time frame."""
 
     # restrict to development period
     data_dev_period = data.loc[pd.to_datetime(data["decision_date"]).dt.year == config.MODEL_DEVELOPMENT_YEAR]
 
     # Slice to development sample
-    data_dev_sample = slice_to_dev_sample(data=data_dev_period)
+    data_dev_sample, filters_applied = slice_to_dev_sample(data=data_dev_period)
 
-    return data_dev_sample
+    return data_dev_sample, filters_applied
 
 
-def build_model_application_sample(data: pd.DataFrame) -> pd.DataFrame:
+def build_model_application_sample(data: pd.DataFrame) -> tuple[pd.DataFrame, Dict[str, int]]:
     """Filter for samples to be included in test data and restrict to dev time frame."""
 
     # Slicing to application sample
-    data_application_sample = data.loc[
+    data_application_sample, filters_applied = data.loc[
         (pd.to_datetime(data["decision_date"]).dt.year == config.MODEL_APPLICATION_YEAR) & (
                     pd.to_datetime(data["decision_date"]).dt.quarter == config.MODEL_APPLICATION_QUARTER)
         ].pipe(slice_to_dev_sample)
 
-    return data_application_sample
+    return data_application_sample, filters_applied
 
 
-def build_model_scoring_sample(data: pd.DataFrame) -> pd.DataFrame:
+def build_model_scoring_sample(data: pd.DataFrame) -> tuple[pd.DataFrame, Dict[str, int]]:
     """Filter for samples to be included in scoring time frame."""
 
     # Slicing to scoring sample
-    data_scoring_sample = data.loc[
+    data_scoring_sample, filters_applied = data.loc[
         (pd.to_datetime(data["decision_date"]) > config.MODEL_DEPLOYMENT_DATE)
         ].pipe(slice_to_dev_sample)
 
-    return data_scoring_sample
+    return data_scoring_sample, filters_applied
 
 
 def add_filled_missing_scores_columns(data: pd.DataFrame) -> pd.DataFrame:
@@ -194,6 +195,7 @@ def risk_grade_estimate_preprocessing(data_in: pd.DataFrame) -> pd.DataFrame:
     data["has_fico"] = data["fico_score"].between(300, 850, inclusive="both")
     data["fico_score"] = data["fico_score"].where(data["has_fico"])
     data["intercept"] = 1  # Used as constant in logistic regression
+    # data["const"] = 1  # Used as constant in logistic regression
 
     # fill missing scores and create indicator variables for NA
     data = add_filled_missing_scores_columns(data=data)
@@ -292,7 +294,7 @@ def fit_risk_grades(
     n_bins_parcelling: int = 10,
     prudence_factors_parcelling: Optional[List[int]] = None,
 
-) -> Tuple[pd.DataFrame, pd.DataFrame, Logit, Dict]:
+) -> Tuple[Dict, Any]:
     """Assign risk grades to slice of data by fitting logistic regression.
 
     Parameters
@@ -396,7 +398,12 @@ def fit_risk_grades(
 
 
 
-def fit_models_for_segments(data: pd.DataFrame, RISK_GRADE_SEGMENTS, NORMALIZE_SCORES, reject_inference_method, n_bins_parcelling, prudence_factors_parcelling) -> Tuple[pd.DataFrame, pd.DataFrame, Dict, Dict]:
+def fit_models_for_segments(data: pd.DataFrame, 
+                            RISK_GRADE_SEGMENTS: Dict[str, Dict[str, Any]],
+                            NORMALIZE_SCORES, 
+                            reject_inference_method, 
+                            n_bins_parcelling, 
+                            prudence_factors_parcelling) -> Tuple[Dict, Dict]:
     """Fit a logit model that matches the scores for each segments to the empirical bad rate."""
 
     # initialize output objects
@@ -410,7 +417,7 @@ def fit_models_for_segments(data: pd.DataFrame, RISK_GRADE_SEGMENTS, NORMALIZE_S
             data=filter_df_for_condition(df=data, cond_dict=params["condition"]),
             model_cols=params["model_cols"],
             core_model_vars=params["core_model_vars"],
-            train_filter=data.eval(params["train_filter"]),
+            train_filter=data.eval(params["train_filter"]), #type: ignore
             NORMALIZE_SCORES = NORMALIZE_SCORES,
             reject_inference_method= reject_inference_method,
             n_bins_parcelling=n_bins_parcelling,
@@ -456,31 +463,38 @@ def apply_fitted_models_to_data(
             model_cols_norm = params["model_cols"]
         
         if len(data_i) > 0:
-            model = models_dict[segment_name].get('financed_model') or models_dict[segment_name].get('infered_model')
+            # model = models_dict[segment_name].get('financed_model') or models_dict[segment_name].get('infered_model')
+            model = models_dict[segment_name].get('infered_model')
             if model is None:
-                print(f"Skipping segment {segment_name} because model is None")
-                continue
+                model = models_dict[segment_name].get('financed_model')
+                if model is None:
+                    print(f"Skipping segment {segment_name} because model is None")
+                    continue
             
             try:
                 exog_data = data_i[model_cols_norm]
                 
                 # Ensure constant term is added if required
-                if hasattr(model, 'params') and "const" in model.params.index:
-                    if "const" not in exog_data.columns:
-                        exog_data = sm.add_constant(exog_data, has_constant='add')
-                
+                try:
+                    if hasattr(model, 'params') and "const" in model.model.exog_names:
+                        if "intercept" not in exog_data.columns:
+                            exog_data = sm.add_constant(exog_data, has_constant='add')
+                            exog_data.rename(columns={"const": "intercept"}, inplace=True) #type: ignore
+                except Exception as e:
+                    print(f"Error adding constant term for segment {segment_name}: {e}")
+                    
                 # Debugging: Print shapes
                 print(f"Segment: {segment_name}")
                 print(f"Expected features in model: {model.params.shape}")
                 print(f"Actual features in data: {exog_data.shape}")
-                print(f"Columns in exog_data: {exog_data.columns.tolist()}")
+                print(f"Columns in exog_data: {exog_data.columns.tolist()}") #type: ignore
                 
                 # Align columns with the model's expected features
-                expected_cols = model.params.index.tolist()
-                missing_cols = [col for col in expected_cols if col not in exog_data.columns]
+                expected_cols = model_cols_norm
+                missing_cols = [col for col in expected_cols if col not in exog_data.columns] #type: ignore
                 if missing_cols:
                     print(f"⚠️ Missing columns in segment {segment_name}: {missing_cols}")
-                exog_data = exog_data.reindex(columns=expected_cols, fill_value=0)
+                exog_data = exog_data.reindex(columns=expected_cols, fill_value=0) #type: ignore
                 
                 # Apply model
                 data_i[f"pd_{segment_name}"] = model.predict(exog=exog_data)
@@ -501,7 +515,7 @@ def calculate_segment_statistics_with_approval(
     RISK_GRADE_SEGMENTS: Dict,
     risk_grade_thresholds: Dict[str, Tuple[float, float]],
     approval_thresholds: Dict[str, bool],
-    PG_SUBSEGMENTS: Dict = None,
+    PG_SUBSEGMENTS: Dict | None = None,
 ) -> pd.DataFrame:
     """Calculate segment statistics with approval/decline decisions."""
 
@@ -543,7 +557,7 @@ def _calculate_single_segment_stats(
     segment_name: str,
     risk_grade_thresholds: Dict[str, Tuple[float, float]],
     approval_thresholds: Dict[str, bool],
-    subsegment_name: str = None,
+    subsegment_name: str | None = None,
 ) -> List[Dict]:
 
     total_rows = len(data)
@@ -711,7 +725,7 @@ def predict_and_assign_risk_grade_for_segment(segment, parameters, fico_scores, 
                  print(f"\nRisk Grade Series for segment: {segment}")
                  print(risk_grades)
              elif isinstance(predictions, pd.DataFrame):
-                 risk_grade_matrix = predictions.applymap(lambda x: assign_risk_grade(x, new_pd_risk_grade_thresholds))
+                 risk_grade_matrix = predictions.applymap(lambda x: assign_risk_grade(x, new_pd_risk_grade_thresholds)) # type: ignore
                  print(f"\nRisk Grade Matrix for segment: {segment}")
                  print(risk_grade_matrix)
          
@@ -856,7 +870,7 @@ def lift_chart_plot(
     # Add ticks & laels to axis
     plt.xlabel("Model Sorted Predictions (Low → High)")
     plt.ylabel("# Observations")
-    plt.xticks(decile_df.index, decile_df[x_axis], rotation=45, ha='right', rotation_mode='anchor')
+    plt.xticks(decile_df.index, decile_df[x_axis], rotation=45, ha='right', rotation_mode='anchor') # type: ignore
     plt.title(f"Actual vs. Predicted Lift Chart - {plot_name}")
 
     # Mirror plot and add event rates
@@ -864,12 +878,12 @@ def lift_chart_plot(
     plt2.set_ylabel("Event rate")
     plt2.set_ylim(ymin=0, ymax=max(decile_df["AVG_PROB"].max(), decile_df["DEFAULT_RATE"].max()) + 0.05)
     plt2.set_yticks(np.arange(0, max(decile_df["AVG_PROB"].max(), decile_df["DEFAULT_RATE"].max()) + 0.05, step=0.05))
-    plt2.plot(
+    plt2.plot( # type: ignore
         decile_df.index, decile_df["DEFAULT_RATE"], label="event_rate", marker="o"
     )
 
     # add average prediction
-    plt2.plot(
+    plt2.plot( # type: ignore
         decile_df.index,
         decile_df["AVG_PROB"],
         label="average_prediction",
@@ -879,7 +893,7 @@ def lift_chart_plot(
     )
 
     # Add global event rate as baseline
-    plt2.plot(
+    plt2.plot( # type: ignore
         [min(decile_df.index) - 1, max(decile_df.index) + 1],
         [event_rate, event_rate],
         color="darkgrey",
@@ -887,11 +901,11 @@ def lift_chart_plot(
         linestyle="--",
         label=f"total_event_rate\n({'{:.1%}'.format(event_rate)})",
     )
-    plt2.legend(loc=0)
+    plt2.legend(loc=0) # type: ignore
     plt2.yaxis.set_major_formatter(ticker.PercentFormatter(xmax=1, decimals=0))
 
     plt2.yaxis.grid(False)
-    plt2.set_xlim([min(decile_df.index) - 0.5, max(decile_df.index) + 0.5])
+    plt2.set_xlim([min(decile_df.index) - 0.5, max(decile_df.index) + 0.5]) # type: ignore
 
     fig.show()
 
